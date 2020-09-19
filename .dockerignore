@@ -1,0 +1,4 @@
+# faz com que o docker ignore as pastas bin e obj que 
+# estiverem dois níveis abaixo da raíz
+*/*/bin/
+*/*/obj/
