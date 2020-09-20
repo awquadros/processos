@@ -1,9 +1,19 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
-WORKDIR /app
+WORKDIR /Awfq.Processos.App
+
+# Copy csproj and restore as distinct layers
+COPY /src/Awfq.Processos.App/*.csproj ./
+RUN dotnet restore
+
+COPY /src/Awfq.Processos.App ./
+
+WORKDIR /Awfq.Processos.Api
 
 # Copy csproj and restore as distinct layers
 COPY /src/Awfq.Processos.Api/*.csproj ./
 RUN dotnet restore
+
+RUN ls --all
 
 # Copy everything else and build
 COPY /src/Awfq.Processos.Api ./
@@ -11,6 +21,6 @@ RUN dotnet publish -c Release -o out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-focal
-WORKDIR /app
-COPY --from=build-env /app/out .
+WORKDIR /Awfq.Processos.Api
+COPY --from=build-env /Awfq.Processos.Api/out .
 ENTRYPOINT ["dotnet", "Awfq.Processos.Api.dll"]
