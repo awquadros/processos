@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Awfq.Processos.App.Aplicacao.Dados.Processos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -12,28 +13,20 @@ namespace Awfq.Processos.Api.v1.Controllers
     [Route("api/[controller]")]
     public class ProcessosController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
         private readonly ILogger<ProcessosController> _logger;
 
-        public ProcessosController(ILogger<ProcessosController> logger)
+        private readonly IServicoConsultaProcessos _servicoConsultaProcessos;
+
+        public ProcessosController(ILogger<ProcessosController> logger, IServicoConsultaProcessos servicoConsultaProcessos)
         {
             _logger = logger;
+            _servicoConsultaProcessos = servicoConsultaProcessos;
         }
 
         [HttpGet("situacoes/")]
-        public IEnumerable<object> Get()
+        public IEnumerable<SituacaoDTO> Get()
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new
-            {
-                Nome = "Em andamento",
-                Finalizado = false
-            })
-            .ToArray();
+            return _servicoConsultaProcessos.ObtemSituacoes().ToArray();
         }
     }
 }
