@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+    api:
+        image: awfq-processos-api
+        build: 
+            context: .
+            dockerfile: Dockerfile.ubuntu-x64.focal
+        ports: 
+            - "8080:80"
+            - "8081:443"
+        networks: 
+            - processos-network
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - ASPNETCORE_HTTPS_PORT=443
+    mongo:
+        image: mongo
+        networks: 
+            - processos-network
+networks: 
+    processos-network:
+        driver: bridge

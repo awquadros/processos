@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Awfq.Processos.App.Dominio.Modelo.Processos;
+using Awfq.Processos.App.Aplicacao.Processos.Dados;
 
-namespace Awfq.Processos.App.Aplicacao.Dados.Processos
+namespace Awfq.Processos.App.Aplicacao.Processos
 {
     public interface IServicoConsultaProcessos
     {

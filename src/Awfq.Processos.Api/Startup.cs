@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Awfq.Processos.App.Aplicacao.Dados.Processos;
+using Awfq.Processos.App.Aplicacao.Processos;
+using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
+using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -68,7 +70,8 @@ namespace Awfq.Processos.Api
         private void InitializeContainer()
         {
             // Add application services. For instance:
-            container.Register<IServicoConsultaProcessos, ServicoConsultaProcessos>(Lifestyle.Singleton);
+            container.Register<IServicoConsultaProcessos, ServicoConsultaProcessos>(Lifestyle.Transient);
+            container.Register<IRepositorioResponsaveis, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -79,7 +82,7 @@ namespace Awfq.Processos.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
 

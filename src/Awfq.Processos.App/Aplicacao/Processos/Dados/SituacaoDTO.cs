@@ -1,6 +1,6 @@
 using System;
 
-namespace Awfq.Processos.App.Aplicacao.Dados.Processos
+namespace Awfq.Processos.App.Aplicacao.Processos.Dados
 {
     public class SituacaoDTO
     {

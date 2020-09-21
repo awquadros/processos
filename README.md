@@ -25,7 +25,7 @@ sudo docker run -d -p 8080:80 --name processos-api awfq.processos.api
 **Ref.:**
 1. https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-3.1
 
-### Bibiotecas
+### Bibliotecas
 
 * [Simple Injector]("https://simpleinjector.org/")
 * [LanguageExt]("https://github.com/louthy/language-ext")

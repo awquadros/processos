@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Awfq.Processos.App.Aplicacao.Dados.Processos;
+using Awfq.Processos.App.Aplicacao.Processos.Dados;
+using Awfq.Processos.App.Aplicacao.Processos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
