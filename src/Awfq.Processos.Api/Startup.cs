@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Awfq.Processos.App.Aplicacao.Processos;
+using Awfq.Processos.App.Aplicacao.Responsaveis;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
 using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB;
 using Microsoft.AspNetCore.Builder;
@@ -71,6 +72,7 @@ namespace Awfq.Processos.Api
         {
             // Add application services. For instance:
             container.Register<IServicoConsultaProcessos, ServicoConsultaProcessos>(Lifestyle.Transient);
+            container.Register<IServicoAplicacaoResponsaveis, ServicoAplicacaoResponsaveis>(Lifestyle.Transient);
             container.Register<IRepositorioResponsaveis, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
         }
 
