@@ -27,11 +27,11 @@ namespace Awfq.Processos.Api.v1.Controllers
         }
 
         [HttpPost]
-        public ActionResult<ResponsavelDTO> CriaResponsavel(NovoResponsavelDTO dto) {
+        public ActionResult<ResponsavelDTO> CriaResponsavel([FromBody] NovoResponsavelDTO dto) {
 
             var comando = new ComandoCriaResponsavel(dto.Nome, dto.Cpf, dto.Email, dto.Foto);
             var result = this._servicoAplicacaoResponsaveis.CriaResponsavel(comando);
-            
+
             return CreatedAtRoute(1, "");
         }
     }
