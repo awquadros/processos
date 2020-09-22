@@ -1,20 +1,27 @@
 using System;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 
 namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
     public class MongoDBRepositorioResponsaveis : IRepositorioResponsaveis
     {
-        public ResponsavelId ObtemProximoId()
+        public Guid ObtemProximoId()
         {
-            return new ResponsavelId(Guid.NewGuid().ToString().ToUpperInvariant());
+            return Guid.NewGuid();
         }
 
         public Responsavel Salva(Responsavel umResponsavel)
         {
-            var client = new MongoClient("mongodb://localhost:27017");
-            client.ListDatabaseNames();
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
+            var client = new MongoClient("mongodb://mongo:27017");
+            var db = client.GetDatabase("processosapp");
+
+            db.GetCollection<Responsavel>("responsaveis").InsertOne(umResponsavel);
 
             return umResponsavel;
         }

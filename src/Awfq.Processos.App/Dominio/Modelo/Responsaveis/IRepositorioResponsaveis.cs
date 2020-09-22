@@ -4,7 +4,7 @@ namespace Awfq.Processos.App.Dominio.Modelo.Responsaveis
 {
     public interface IRepositorioResponsaveis
     {
-        ResponsavelId ObtemProximoId();
+        Guid ObtemProximoId();
 
         Responsavel Salva(Responsavel umResponsavel);
     }

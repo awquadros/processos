@@ -20,6 +20,16 @@ sudo docker run -d -p 8080:80 --name processos-api awfq.processos.api
 
 ## Implementação
 
+**Processos**
+
+http://localhost:8080/api/processos/situacoes?api-version=1.0
+
+### Persistência
+
+**Ref.:**
+1. https://kevsoft.net/2020/06/25/storing-guids-as-strings-in-mongodb-with-csharp.html
+2. https://www.mongodb.com/blog/post/generating-globally-unique-identifiers-for-use-with-mongodb
+   
 ### Testes de Integração
 
 **Ref.:**

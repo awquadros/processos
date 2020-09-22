@@ -60,12 +60,20 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
                 : Right<IEnumerable<ValidacoesEntrada>, ComandoCriaResponsavel>(cmd);
         }
         private Either<IEnumerable<ValidacoesEntrada>, ResponsavelDTO> ProcedeCriacaoResponsavel(ComandoCriaResponsavel cmd)
-            => Right<IEnumerable<ValidacoesEntrada>, ResponsavelDTO>(
-                new ResponsavelDTO()
-                {
-                    Nome = cmd.Nome,
-                    Email = cmd.Email
-                });
+        {
+            var id = this.repositorio.ObtemProximoId();
+            var responsavelSalvo = this.repositorio.Salva(new Responsavel(id, cmd.Nome, cmd.Cpf, cmd.Email, cmd.Foto));
+
+            return Right<IEnumerable<ValidacoesEntrada>, ResponsavelDTO>(
+                    new ResponsavelDTO()
+                    {
+                        Id = responsavelSalvo.Id,
+                        Nome = responsavelSalvo.Nome,
+                        Cpf = responsavelSalvo.Cpf,
+                        Email = responsavelSalvo.Email,
+                        Foto = responsavelSalvo.Foto
+                    });
+        }
 
         private Either<IEnumerable<ValidacoesEntrada>, ResponsavelDTO> CancelaCriacaoResponsavel(IEnumerable<ValidacoesEntrada> erros)
             => Left<IEnumerable<ValidacoesEntrada>, ResponsavelDTO>(erros);

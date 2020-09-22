@@ -4,10 +4,10 @@ namespace Awfq.Processos.App.Dominio.Modelo.Responsaveis
 {
     public class ResponsavelId
     {
-        private readonly string id;
+        public string Id {get; private set;}
 
         public ResponsavelId(string id) {
-            this.id = id;
+            this.Id = id;
         }
     }
 }

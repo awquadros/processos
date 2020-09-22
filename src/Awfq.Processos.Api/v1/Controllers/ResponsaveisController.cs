@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Awfq.Processos.App.Aplicacao.Processos;
-using Awfq.Processos.App.Aplicacao.Processos.Dados;
 using Awfq.Processos.App.Aplicacao.Responsaveis;
 using Awfq.Processos.App.Aplicacao.Responsaveis.Comandos;
 using Awfq.Processos.App.Aplicacao.Responsaveis.Dados;
@@ -32,7 +30,13 @@ namespace Awfq.Processos.Api.v1.Controllers
             var comando = new ComandoCriaResponsavel(dto.Nome, dto.Cpf, dto.Email, dto.Foto);
             var result = this._servicoAplicacaoResponsaveis.CriaResponsavel(comando);
 
-            return CreatedAtRoute(1, "");
+            return result.Match(criadoNaRota, usuarioPrecisaCorrigirEntrada);
         }
+
+        public ActionResult<ResponsavelDTO> criadoNaRota(ResponsavelDTO r) 
+            => Ok(r);
+
+        public ActionResult<ResponsavelDTO> usuarioPrecisaCorrigirEntrada(IEnumerable<ValidacoesEntrada> e) 
+            => BadRequest(e);
     }
 }
