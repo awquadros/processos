@@ -15,6 +15,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SimpleInjector;
+using Microsoft.Extensions.Options;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Awfq.Processos.Api
 {
@@ -66,19 +71,32 @@ namespace Awfq.Processos.Api
             });
 
             InitializeContainer();
+
+            // MongoDb Global Settings
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
         }
 
         private void InitializeContainer()
         {
+            // Load application db settings
+            ConfiguracoesMongoDb configuracoesMongoDb =
+                Configuration.GetSection(nameof(ConfiguracoesMongoDb)).Get<ConfiguracoesMongoDb>();
+
+            // MongoDB Cient
+            container.Register<IMongoClient>(() => new MongoClient(configuracoesMongoDb.StringConexao), Lifestyle.Singleton);
+
             // Add application services. For instance:
             container.Register<IServicoConsultaProcessos, ServicoConsultaProcessos>(Lifestyle.Transient);
             container.Register<IServicoAplicacaoResponsaveis, ServicoAplicacaoResponsaveis>(Lifestyle.Transient);
             container.Register<IRepositorioResponsaveis, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
+            container.RegisterInstance<ConfiguracoesMongoDb>(configuracoesMongoDb);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseSimpleInjector(container);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -94,6 +112,8 @@ namespace Awfq.Processos.Api
             {
                 endpoints.MapControllers();
             });
+
+            container.Verify();
         }
     }
 }

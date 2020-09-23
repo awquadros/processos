@@ -1,27 +1,47 @@
 using System;
+using System.Linq;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 
 namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
     public class MongoDBRepositorioResponsaveis : IRepositorioResponsaveis
     {
+        private readonly ConfiguracoesMongoDb configuracoes;
+        private readonly IMongoClient mongoClient;
+
+        public MongoDBRepositorioResponsaveis(ConfiguracoesMongoDb configuracoes, IMongoClient mongoClient) {
+            this.configuracoes = configuracoes;
+            this.mongoClient = mongoClient;
+        }
+
+        /// <sumary>
+        /// Dado um CPF, verifica se um determinado Responsavel existe na base de dados
+        /// </sumary>
+        public bool CpfJaCadastrado(String umCpf)
+        {
+            return this.mongoClient
+                    .GetDatabase(configuracoes.NomeBaseDados)
+                    .GetCollection<Responsavel>(configuracoes.NomeColecacoResponsaveis)
+                    .Find(r => r.Cpf.Equals(umCpf)).Any();
+        }
+
         public Guid ObtemProximoId()
         {
             return Guid.NewGuid();
         }
 
+        public Responsavel Remove(Guid umId)
+        {
+            throw new NotImplementedException();
+        }
+
         public Responsavel Salva(Responsavel umResponsavel)
         {
-            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
-            var client = new MongoClient("mongodb://mongo:27017");
-            var db = client.GetDatabase("processosapp");
+            var db = this.mongoClient.GetDatabase(configuracoes.NomeBaseDados);
 
-            db.GetCollection<Responsavel>("responsaveis").InsertOne(umResponsavel);
+            db.GetCollection<Responsavel>(configuracoes.NomeColecacoResponsaveis).InsertOne(umResponsavel);
 
             return umResponsavel;
         }

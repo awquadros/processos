@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Awfq.Processos.App.Aplicacao.Responsaveis.Comandos;
@@ -17,7 +18,8 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
     {
         private readonly IRepositorioResponsaveis repositorio;
 
-        public ServicoAplicacaoResponsaveis(IRepositorioResponsaveis umRepositorio) {
+        public ServicoAplicacaoResponsaveis(IRepositorioResponsaveis umRepositorio)
+        {
             this.repositorio = umRepositorio;
         }
 
@@ -54,6 +56,9 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
 
             if (!string.IsNullOrWhiteSpace(cmd.Email) && cmd.Email.Length > 400)
                 erros.Add(ValidacoesEntrada.EmailExcedeuLimiteMaximo);
+
+            if (this.repositorio.CpfJaCadastrado(cmd.Cpf))
+                erros.Add(ValidacoesEntrada.CpfDuplicado);
 
             return erros.Any()
                 ? Left<IEnumerable<ValidacoesEntrada>, ComandoCriaResponsavel>(erros)
