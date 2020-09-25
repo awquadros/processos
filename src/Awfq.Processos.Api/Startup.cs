@@ -20,6 +20,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB.Abstracoes;
 
 namespace Awfq.Processos.Api
 {
@@ -66,14 +67,14 @@ namespace Awfq.Processos.Api
                 // Optionally, allow application components to depend on the non-generic
                 // ILogger (Microsoft.Extensions.Logging) or IStringLocalizer
                 // (Microsoft.Extensions.Localization) abstractions.
-                // options.AddLogging();
+                options.AddLogging();
                 // options.AddLocalization();
             });
 
             InitializeContainer();
 
             // MongoDb Global Settings
-            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+            // BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
         }
 
         private void InitializeContainer()
@@ -82,14 +83,17 @@ namespace Awfq.Processos.Api
             ConfiguracoesMongoDb configuracoesMongoDb =
                 Configuration.GetSection(nameof(ConfiguracoesMongoDb)).Get<ConfiguracoesMongoDb>();
 
-            // MongoDB Cient
+            // Persistencia
             container.Register<IMongoClient>(() => new MongoClient(configuracoesMongoDb.StringConexao), Lifestyle.Singleton);
+            container.Register<IContextoPersistencia, ContextoPersistencia>(Lifestyle.Transient);
 
             // Add application services. For instance:
             container.Register<IServicoConsultaProcessos, ServicoConsultaProcessos>(Lifestyle.Transient);
             container.Register<IServicoAplicacaoResponsaveis, ServicoAplicacaoResponsaveis>(Lifestyle.Transient);
             container.Register<IRepositorioResponsaveis, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
+            container.Register<IRemovedorResponsavel, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
             container.RegisterInstance<ConfiguracoesMongoDb>(configuracoesMongoDb);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

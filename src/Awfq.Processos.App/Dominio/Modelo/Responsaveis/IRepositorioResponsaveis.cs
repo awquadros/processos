@@ -21,11 +21,6 @@ namespace Awfq.Processos.App.Dominio.Modelo.Responsaveis
         Responsavel Salva(Responsavel umResponsavel);
 
         /// <sumary>
-        /// Remove um Responsável
-        /// </sumary>
-        Responsavel Remove(Guid umId);
-
-        /// <sumary>
         /// Dado um CPF, verifica se um determinado Responsavel existe na base de dados
         /// </sumary>
         bool CpfJaCadastrado(String umCpf);

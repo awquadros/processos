@@ -1,48 +1,47 @@
 using System;
 using System.Linq;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
+using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB.Abstracoes;
+using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
-    public class MongoDBRepositorioResponsaveis : IRepositorioResponsaveis
+    public class MongoDBRepositorioResponsaveis : IRemovedorResponsavel, IRepositorioResponsaveis
     {
-        private readonly ConfiguracoesMongoDb configuracoes;
-        private readonly IMongoClient mongoClient;
+        private readonly IContextoPersistencia contextoPersistencia;
+        private readonly ILogger logger;
 
-        public MongoDBRepositorioResponsaveis(ConfiguracoesMongoDb configuracoes, IMongoClient mongoClient) {
-            this.configuracoes = configuracoes;
-            this.mongoClient = mongoClient;
+
+        public MongoDBRepositorioResponsaveis(IContextoPersistencia umContextoPersistencia, ILogger umLogger)
+        {
+            this.contextoPersistencia = umContextoPersistencia;
+            this.logger = umLogger;
         }
 
         /// <sumary>
         /// Dado um CPF, verifica se um determinado Responsavel existe na base de dados
         /// </sumary>
-        public bool CpfJaCadastrado(String umCpf)
-        {
-            return this.mongoClient
-                    .GetDatabase(configuracoes.NomeBaseDados)
-                    .GetCollection<Responsavel>(configuracoes.NomeColecacoResponsaveis)
-                    .Find(r => r.Cpf.Equals(umCpf)).Any();
-        }
+        public bool CpfJaCadastrado(String umCpf) =>
+            this.contextoPersistencia.Responsaveis.Find(r => r.Cpf.Equals(umCpf)).Any();
 
-        public Guid ObtemProximoId()
-        {
-            return Guid.NewGuid();
-        }
+        public Guid ObtemProximoId() => Guid.NewGuid();
 
         public Responsavel Remove(Guid umId)
         {
-            throw new NotImplementedException();
+            return 
+                this.contextoPersistencia
+                    .Responsaveis
+                    .FindOneAndDelete(new BsonDocument()
+                    {
+                        { "_id", new BsonBinaryData(umId,  GuidRepresentation.Standard) }
+                    });
         }
 
         public Responsavel Salva(Responsavel umResponsavel)
         {
-
-            var db = this.mongoClient.GetDatabase(configuracoes.NomeBaseDados);
-
-            db.GetCollection<Responsavel>(configuracoes.NomeColecacoResponsaveis).InsertOne(umResponsavel);
-
+            this.contextoPersistencia.Responsaveis.InsertOne(umResponsavel);
             return umResponsavel;
         }
     }

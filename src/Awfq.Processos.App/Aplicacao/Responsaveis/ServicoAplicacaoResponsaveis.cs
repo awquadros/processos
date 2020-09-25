@@ -17,13 +17,24 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
     public class ServicoAplicacaoResponsaveis : IServicoAplicacaoResponsaveis
     {
         private readonly IRepositorioResponsaveis repositorio;
+        private readonly IRemovedorResponsavel removedor;
 
-        public ServicoAplicacaoResponsaveis(IRepositorioResponsaveis umRepositorio)
+        public ServicoAplicacaoResponsaveis(IRepositorioResponsaveis umRepositorio, IRemovedorResponsavel umRemovedor)
         {
             this.repositorio = umRepositorio;
+            this.removedor = umRemovedor;
         }
 
-        public Either<IEnumerable<ValidacoesEntrada>, ResponsavelDTO> CriaResponsavel(ComandoCriaResponsavel cmd)
+        public Either<IEnumerable<MensagensErros>, ResponsavelDTO> RemoveResponsavel(ComandoRemoveResponsavel cmd)
+        {
+            var result = 
+                validaRemocaoResponsavel(cmd)
+                    .Match(ProcedeRemocaoResponsavel, CancelaRemocaoResponsavel);
+
+            return result;
+        }
+
+        public Either<IEnumerable<MensagensErros>, ResponsavelDTO> CriaResponsavel(ComandoCriaResponsavel cmd)
         {
             var result =
                 validaCriacaoResponsavel(cmd)
@@ -32,55 +43,86 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
             return result;
         }
 
-        private Either<IEnumerable<ValidacoesEntrada>, ComandoCriaResponsavel> validaCriacaoResponsavel(ComandoCriaResponsavel cmd)
+        private Either<IEnumerable<MensagensErros>, ComandoCriaResponsavel> validaCriacaoResponsavel(ComandoCriaResponsavel cmd)
         {
-            var erros = new List<ValidacoesEntrada>();
+            var erros = new List<MensagensErros>();
 
             if (string.IsNullOrWhiteSpace(cmd.Nome))
-                erros.Add(ValidacoesEntrada.NomeCompletoNaoInformado);
+                erros.Add(MensagensErros.NomeCompletoNaoInformado);
 
             if (!string.IsNullOrWhiteSpace(cmd.Nome) && cmd.Nome.Split(' ').Count() < 2)
-                erros.Add(ValidacoesEntrada.NomeCompletoNaoInformado);
+                erros.Add(MensagensErros.NomeCompletoNaoInformado);
 
             if (!string.IsNullOrWhiteSpace(cmd.Nome) && cmd.Nome.Length > 150)
-                erros.Add(ValidacoesEntrada.NomeExcedeuLimiteMaximo);
+                erros.Add(MensagensErros.NomeExcedeuLimiteMaximo);
 
             if (string.IsNullOrWhiteSpace(cmd.Cpf))
-                erros.Add(ValidacoesEntrada.CpfNaoInformado);
+                erros.Add(MensagensErros.CpfNaoInformado);
 
             if (string.IsNullOrWhiteSpace(cmd.Email))
-                erros.Add(ValidacoesEntrada.EmailNaoInformado);
+                erros.Add(MensagensErros.EmailNaoInformado);
 
             if (!string.IsNullOrWhiteSpace(cmd.Email) && !ValidadorEmail.IsValidEmail(cmd.Email))
-                erros.Add(ValidacoesEntrada.EmailInvalido);
+                erros.Add(MensagensErros.EmailInvalido);
 
             if (!string.IsNullOrWhiteSpace(cmd.Email) && cmd.Email.Length > 400)
-                erros.Add(ValidacoesEntrada.EmailExcedeuLimiteMaximo);
+                erros.Add(MensagensErros.EmailExcedeuLimiteMaximo);
 
             if (this.repositorio.CpfJaCadastrado(cmd.Cpf))
-                erros.Add(ValidacoesEntrada.CpfDuplicado);
+                erros.Add(MensagensErros.CpfDuplicado);
 
             return erros.Any()
-                ? Left<IEnumerable<ValidacoesEntrada>, ComandoCriaResponsavel>(erros)
-                : Right<IEnumerable<ValidacoesEntrada>, ComandoCriaResponsavel>(cmd);
+                ? Left<IEnumerable<MensagensErros>, ComandoCriaResponsavel>(erros)
+                : Right<IEnumerable<MensagensErros>, ComandoCriaResponsavel>(cmd);
         }
-        private Either<IEnumerable<ValidacoesEntrada>, ResponsavelDTO> ProcedeCriacaoResponsavel(ComandoCriaResponsavel cmd)
+        private Either<IEnumerable<MensagensErros>, ResponsavelDTO> ProcedeCriacaoResponsavel(ComandoCriaResponsavel cmd)
         {
             var id = this.repositorio.ObtemProximoId();
-            var responsavelSalvo = this.repositorio.Salva(new Responsavel(id, cmd.Nome, cmd.Cpf, cmd.Email, cmd.Foto));
+            var responsavel = this.repositorio.Salva(new Responsavel(id, cmd.Nome, cmd.Cpf, cmd.Email, cmd.Foto));
 
-            return Right<IEnumerable<ValidacoesEntrada>, ResponsavelDTO>(
-                    new ResponsavelDTO()
-                    {
-                        Id = responsavelSalvo.Id,
-                        Nome = responsavelSalvo.Nome,
-                        Cpf = responsavelSalvo.Cpf,
-                        Email = responsavelSalvo.Email,
-                        Foto = responsavelSalvo.Foto
-                    });
+            return Right<IEnumerable<MensagensErros>, ResponsavelDTO>(CriarDesse(responsavel));
         }
 
-        private Either<IEnumerable<ValidacoesEntrada>, ResponsavelDTO> CancelaCriacaoResponsavel(IEnumerable<ValidacoesEntrada> erros)
-            => Left<IEnumerable<ValidacoesEntrada>, ResponsavelDTO>(erros);
+        private Either<IEnumerable<MensagensErros>, ResponsavelDTO> CancelaCriacaoResponsavel(IEnumerable<MensagensErros> erros)
+            => Left<IEnumerable<MensagensErros>, ResponsavelDTO>(erros);
+
+        private Either<IEnumerable<MensagensErros>, ResponsavelDTO> CancelaRemocaoResponsavel(IEnumerable<MensagensErros> erros)
+            => Left<IEnumerable<MensagensErros>, ResponsavelDTO>(erros);
+
+        private Either<IEnumerable<MensagensErros>, ComandoRemoveResponsavel> validaRemocaoResponsavel(ComandoRemoveResponsavel cmd) {
+            var erros = new List<MensagensErros>();
+
+            if (cmd == null)
+                erros.Add(MensagensErros.ComandoInvalido);
+
+            if (!Guid.TryParse(cmd.Id, out Guid id))
+                erros.Add(MensagensErros.IdentificadorUnicoInvalido);
+
+            return erros.Any()
+                ? Left<IEnumerable<MensagensErros>, ComandoRemoveResponsavel>(erros)
+                : Right<IEnumerable<MensagensErros>, ComandoRemoveResponsavel>(cmd);
+        }
+
+        private Either<IEnumerable<MensagensErros>, ResponsavelDTO> ProcedeRemocaoResponsavel(ComandoRemoveResponsavel cmd)
+        {
+            var guid = new Guid(cmd.Id);
+            var responsavel = this.removedor.Remove(guid);
+
+            return responsavel == null 
+                    ? Left<IEnumerable<MensagensErros>, ResponsavelDTO>(
+                        new MensagensErros[] { MensagensErros.RecursoNaoEncontrado })
+                    : Right<IEnumerable<MensagensErros>, ResponsavelDTO>(CriarDesse(responsavel));
+        }
+
+        private ResponsavelDTO CriarDesse(Responsavel responsavel) {
+            return new ResponsavelDTO()
+                    {
+                        Id = responsavel.Id,
+                        Nome = responsavel.Nome,
+                        Cpf = responsavel.Cpf,
+                        Email = responsavel.Email,
+                        Foto = responsavel.Foto
+                    };
+        }
     }
 }

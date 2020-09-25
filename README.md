@@ -18,6 +18,10 @@ sudo docker run -d -p 8080:80 --name processos-api awfq.processos.api
 
 * Talvez você precise de privilegios elevados para executar o docker no seu sistema operacional.
 
+## Mongo Shell
+
+docker exec -it mongoContainer mongo
+
 ## Implementação
 
 **Processos**

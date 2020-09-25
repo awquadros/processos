@@ -18,7 +18,9 @@ namespace Awfq.Processos.Api.v1.Controllers
         private readonly ILogger<ProcessosController> _logger;
         private readonly IServicoAplicacaoResponsaveis _servicoAplicacaoResponsaveis;
 
-        public ResponsaveisController(ILogger<ProcessosController> logger, IServicoAplicacaoResponsaveis servicoAplicacaoResponsaveis)
+        public ResponsaveisController(
+            ILogger<ProcessosController> logger, 
+            IServicoAplicacaoResponsaveis servicoAplicacaoResponsaveis)
         {
             _logger = logger;
             _servicoAplicacaoResponsaveis = servicoAplicacaoResponsaveis;
@@ -33,10 +35,24 @@ namespace Awfq.Processos.Api.v1.Controllers
             return result.Match(criadoNaRota, usuarioPrecisaCorrigirEntrada);
         }
 
-        public ActionResult<ResponsavelDTO> criadoNaRota(ResponsavelDTO r) 
-            => Ok(r);
+        [HttpDelete("{id}")]
+        public ActionResult<ResponsavelDTO> RemoveResponsavel(string id) {
+            var comando = new ComandoRemoveResponsavel(id);
+            var result = this._servicoAplicacaoResponsaveis.RemoveResponsavel(comando);
 
-        public ActionResult<ResponsavelDTO> usuarioPrecisaCorrigirEntrada(IEnumerable<ValidacoesEntrada> e) 
+            return result.Match(removido, lidaComFalhaRemocao);
+        }
+
+        protected ActionResult<ResponsavelDTO> removido(ResponsavelDTO r) => Ok(r);
+
+        protected ActionResult<ResponsavelDTO> criadoNaRota(ResponsavelDTO r) => Ok(r);
+
+        protected ActionResult<ResponsavelDTO> usuarioPrecisaCorrigirEntrada(IEnumerable<MensagensErros> e) 
             => BadRequest(e);
+
+        protected ActionResult<ResponsavelDTO> lidaComFalhaRemocao(IEnumerable<MensagensErros> e) 
+            => e.Contains(MensagensErros.RecursoNaoEncontrado) 
+                ? (ActionResult<ResponsavelDTO>) NoContent()
+                : (ActionResult<ResponsavelDTO>) BadRequest(e);
     }
 }

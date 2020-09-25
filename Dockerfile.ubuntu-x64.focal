@@ -1,4 +1,13 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
+
+WORKDIR /Awfq.Comuns
+
+# Copy csproj and restore as distinct layers
+COPY /src/Awfq.Comuns/*.csproj ./
+RUN dotnet restore
+
+COPY /src/Awfq.Comuns ./
+
 WORKDIR /Awfq.Processos.App
 
 # Copy csproj and restore as distinct layers
@@ -12,8 +21,6 @@ WORKDIR /Awfq.Processos.Api
 # Copy csproj and restore as distinct layers
 COPY /src/Awfq.Processos.Api/*.csproj ./
 RUN dotnet restore
-
-RUN ls --all
 
 # Copy everything else and build
 COPY /src/Awfq.Processos.Api ./

@@ -7,6 +7,8 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
 {
     public interface IServicoAplicacaoResponsaveis
     {
-        Either<IEnumerable<ValidacoesEntrada>, ResponsavelDTO> CriaResponsavel(ComandoCriaResponsavel cmd);
+        Either<IEnumerable<MensagensErros>, ResponsavelDTO> CriaResponsavel(ComandoCriaResponsavel cmd);
+
+        Either<IEnumerable<MensagensErros>, ResponsavelDTO> RemoveResponsavel(ComandoRemoveResponsavel cmd);
     }
 }
