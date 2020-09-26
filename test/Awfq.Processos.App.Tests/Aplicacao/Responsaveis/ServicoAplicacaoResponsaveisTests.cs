@@ -23,6 +23,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             {
                 var repo = new Mock<IRepositorioResponsaveis>();
                 var removedor = new Mock<IRemovedorResponsavel>().Object;
+                var editor = new Mock<IEditorResponsavel>().Object;
                 var validadorEmail = new Mock<IValidadorEmail>();
                 //var validadorCpf = new ValidadorCpf();
                 var validadorCpf = new Mock<IValidadorCpf>();
@@ -44,7 +45,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
                     .Returns(true);
 
                 this.servico = new ServicoAplicacaoResponsaveis(
-                    repo.Object, removedor, validadorEmail.Object, validadorCpf.Object);
+                    repo.Object, removedor, editor, validadorEmail.Object, validadorCpf.Object);
             }
 
             [Fact]
@@ -210,15 +211,17 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             private readonly Mock<IValidadorEmail> validadorEmail;
             private readonly Mock<IValidadorCpf> validadorCpf;
             private readonly ServicoAplicacaoResponsaveis servico;
+            private readonly Mock<IEditorResponsavel> editor;
 
             public ServicoComConfiguracao()
             {
                 this.repo = new Mock<IRepositorioResponsaveis>();
                 this.removedor = new Mock<IRemovedorResponsavel>();
+                this.editor = new Mock<IEditorResponsavel>();
                 this.validadorEmail = new Mock<IValidadorEmail>();
                 this.validadorCpf = new Mock<IValidadorCpf>();
                 this.servico = new ServicoAplicacaoResponsaveis(
-                    repo.Object, removedor.Object, validadorEmail.Object, validadorCpf.Object);
+                    repo.Object, removedor.Object, editor.Object, validadorEmail.Object, validadorCpf.Object);
             }
 
             [Fact]
