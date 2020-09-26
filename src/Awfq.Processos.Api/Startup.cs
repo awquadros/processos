@@ -21,6 +21,8 @@ using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB.Abstracoes;
+using Awfq.Comuns;
+using Awfq.Processos.App.Utils;
 
 namespace Awfq.Processos.Api
 {
@@ -92,6 +94,10 @@ namespace Awfq.Processos.Api
             container.Register<IServicoAplicacaoResponsaveis, ServicoAplicacaoResponsaveis>(Lifestyle.Transient);
             container.Register<IRepositorioResponsaveis, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
             container.Register<IRemovedorResponsavel, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
+            container.Register<IEditorResponsavel, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
+            container.Register<IServicoConsultaResponsaveis, ServicoConsultaResponsaveis>(Lifestyle.Transient);
+            container.Register<IValidadorEmail, ValidadorEmail>(Lifestyle.Transient);
+            container.Register<IValidadorCpf, ValidadorCpf>(Lifestyle.Transient);
             container.RegisterInstance<ConfiguracoesMongoDb>(configuracoesMongoDb);
 
         }

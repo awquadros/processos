@@ -16,7 +16,8 @@ namespace Awfq.Processos.App.Tests
         public void EmailDeveSerInvalido(String input)
         {
             // Arrange
-            var resultado = ValidadorEmail.IsValidEmail(input);
+            var validador = new ValidadorEmail();
+            var resultado = validador.EmailValido(input);
 
             // Assert
             resultado
@@ -32,7 +33,8 @@ namespace Awfq.Processos.App.Tests
         public void EmailDeveSerValido(String input)
         {
             // Arrange
-            var resultado = ValidadorEmail.IsValidEmail(input);
+            var validador = new ValidadorEmail();
+            var resultado = validador.EmailValido(input);
 
             // Assert
             resultado

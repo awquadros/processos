@@ -1,19 +1,23 @@
 using System;
 using System.Net.Mail;
+using Awfq.Comuns;
 
 namespace Awfq.Processos.App.Utils
 {
-    public class ValidadorEmail
+    public class ValidadorEmail : IValidadorEmail
     {
-        public static bool IsValidEmail(string email)
+        public bool EmailValido(string umEmail)
         {
             try
             {
-                new MailAddress(email);
+                new MailAddress(umEmail);
 
                 return true;
             }
-            catch (FormatException)
+            catch (Exception ex) when (
+                ex is ArgumentNullException || 
+                ex is ArgumentException || 
+                ex is FormatException)
             {
                 return false;
             }

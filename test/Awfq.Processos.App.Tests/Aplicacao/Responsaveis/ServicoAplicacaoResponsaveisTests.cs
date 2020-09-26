@@ -6,189 +6,302 @@ using LanguageExt;
 using System;
 using Moq;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
+using Awfq.Comuns;
+using Awfq.Processos.App.Utils;
 
 namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
 {
     public class ServicoAplicacaoResponsaveisTests
     {
-        private const string CPF_VALIDO = "51666109037";
+        private const string CPF_VALIDO = "42795207044";
 
-        [Fact]
-        public void EmailObrigatorio()
+        public class ServicoComValidadoresSempreVerdadeiros
         {
-            // Arrange
-            var repo = new Mock<IRepositorioResponsaveis>();
-            var removedor = new Mock<IRemovedorResponsavel>();
-            var nome_incompleto = "Fulano de Tal";
-            var cpf = CPF_VALIDO;
-            var email = String.Empty;
-            var servico = new ServicoAplicacaoResponsaveis(repo.Object, removedor.Object);
-            var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+            readonly ServicoAplicacaoResponsaveis servico;
 
-            // Act
-            var result = servico.CriaResponsavel(comando);
-
-            // Assert
-            result.State.Should().Be(EitherStatus.IsLeft);
-            result.IfLeft(e =>
+            public ServicoComValidadoresSempreVerdadeiros()
             {
-                e.Should().NotBeEmpty().And.Contain(MensagensErros.EmailNaoInformado);
-            });
+                var repo = new Mock<IRepositorioResponsaveis>();
+                var removedor = new Mock<IRemovedorResponsavel>().Object;
+                var validadorEmail = new Mock<IValidadorEmail>();
+                //var validadorCpf = new ValidadorCpf();
+                var validadorCpf = new Mock<IValidadorCpf>();
+
+                repo
+                    .Setup(o => o.Salva(It.IsAny<Responsavel>()))
+                    .Returns((Responsavel a) => a);
+
+                repo
+                    .Setup(o => o.CpfJaCadastrado(It.IsAny<string>()))
+                    .Returns(false);
+
+                validadorEmail
+                    .Setup(v => v.EmailValido(It.IsAny<string>()))
+                    .Returns(true);
+
+                validadorCpf
+                    .Setup(v => v.CpfValido(It.IsAny<string>()))
+                    .Returns(true);
+
+                this.servico = new ServicoAplicacaoResponsaveis(
+                    repo.Object, removedor, validadorEmail.Object, validadorCpf.Object);
+            }
+
+            [Fact]
+            public void CpfValido()
+            {
+                // Arrange
+                var nome_incompleto = "Fulano de Tal";
+                var cpf = "38078202059";
+                var email = "fulano_prestes_123@host.com";
+                var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+
+                // Act
+                var result = servico.CriaResponsavel(comando);
+
+                // Assert
+                result.State.Should().Be(EitherStatus.IsRight);
+            }
+
+            [Fact]
+            public void EmailObrigatorio()
+            {
+                // Arrange
+                var nomeIncompleto = "Fulano de Tal";
+                var cpf = CPF_VALIDO;
+                var email = String.Empty;
+                var comando = new ComandoCriaResponsavel(nomeIncompleto, cpf, email);
+
+                // Act
+                var result = servico.CriaResponsavel(comando);
+
+                // Assert
+                result.State.Should().Be(EitherStatus.IsLeft);
+                result.IfLeft(e =>
+                {
+                    e.Should().NotBeEmpty().And.Contain(MensagensErros.EmailNaoInformado);
+                });
+            }
+
+            [Fact]
+            public void EmailDeveSuportar400Caracteres()
+            {
+                // Arrange
+                var nome_incompleto = "Fulano de Tal";
+                var cpf = CPF_VALIDO;
+                var emailTamanhoMaximo = $"{StringTestsUtils.RandomString(350)}@{StringTestsUtils.RandomString(45)}.com";
+                var comandoValido = new ComandoCriaResponsavel(nome_incompleto, cpf, emailTamanhoMaximo);
+
+                // Act
+                var resultadoComEmailValido = servico.CriaResponsavel(comandoValido);
+
+                // Assert
+                resultadoComEmailValido.State.Should().Be(EitherStatus.IsRight);
+                resultadoComEmailValido.IfRight(e =>
+                {
+                    e.Email.Should().Be(emailTamanhoMaximo);
+                });
+            }
+
+            [Fact]
+            public void EmailDeveTerNoMaximo400Caracteres()
+            {
+                // Arrange
+                var nome_incompleto = "Fulano de Tal";
+                var cpf = CPF_VALIDO;
+                var emailTamanhoMaximoExcedido = $"{StringTestsUtils.RandomString(350)}@${StringTestsUtils.RandomString(45)}.com.br";
+                var comandoInvalido = new ComandoCriaResponsavel(nome_incompleto, cpf, emailTamanhoMaximoExcedido);
+
+                // Act
+                var resultadoComEmailInvalido = servico.CriaResponsavel(comandoInvalido);
+
+                // Assert
+                resultadoComEmailInvalido.State.Should().Be(EitherStatus.IsLeft);
+                resultadoComEmailInvalido.IfLeft(e =>
+                {
+                    e.Should().NotBeEmpty().And.Contain(MensagensErros.EmailExcedeuLimiteMaximo);
+                });
+            }
+
+            [Fact]
+            public void CpfObrigatorio()
+            {
+                // Arrange
+                var nome_incompleto = "Fulano de Tal";
+                var cpf = "";
+                var email = "fulano_prestes_123@host.com";
+                var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+
+                // Act
+                var result = servico.CriaResponsavel(comando);
+
+                // Assert
+                result.State.Should().Be(EitherStatus.IsLeft);
+                result.IfLeft(e =>
+                {
+                    e.Should().NotBeEmpty().And.Contain(MensagensErros.CpfNaoInformado);
+                });
+            }
+
+            [Fact]
+            public void NomeObrigatorio()
+            {
+                // Arrange
+                var nome_incompleto = "Fulano";
+                var cpf = "51666109037";
+                var email = "fulano_prestes_123@host.com";
+                var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+
+                // Act
+                var result = servico.CriaResponsavel(comando);
+
+                // Assert
+                result.State.Should().Be(EitherStatus.IsLeft);
+                result.IfLeft(e =>
+                {
+                    e.Should().NotBeEmpty().And.Contain(MensagensErros.NomeCompletoNaoInformado);
+                });
+            }
+
+            [Fact]
+            public void NomeAceitarAte150Caracteres()
+            {
+                var nomeTamanhoMaximo = $"{StringTestsUtils.RandomString(50)} {StringTestsUtils.RandomString(99)}";
+                var cpf = "51666109037";
+                var email = "fulano_prestes_123@host.com";
+                var comandoNomeValido = new ComandoCriaResponsavel(nomeTamanhoMaximo, cpf, email);
+
+                // Act
+                var resultadoComNomeValido = servico.CriaResponsavel(comandoNomeValido);
+
+                // Assert
+                resultadoComNomeValido.State.Should().Be(EitherStatus.IsRight);
+                resultadoComNomeValido.IfRight(e =>
+                {
+                    e.Nome.Should().Be(nomeTamanhoMaximo);
+                });
+            }
+
+            [Fact]
+            public void NomeDeveTerNoMaximo150Caracteres()
+            {
+                var nomeTamanhoMaximoExcedido = $"{StringTestsUtils.RandomString(50)} {StringTestsUtils.RandomString(100)}";
+                var cpf = "51666109037";
+                var email = "fulano_prestes_123@host.com";
+                var comandoNomeInvalido = new ComandoCriaResponsavel(nomeTamanhoMaximoExcedido, cpf, email);
+
+                // Act
+                var resultadoComNomeInvalido = servico.CriaResponsavel(comandoNomeInvalido);
+
+                // Assert
+                resultadoComNomeInvalido.State.Should().Be(EitherStatus.IsLeft);
+                resultadoComNomeInvalido.IfLeft(e =>
+                {
+                    e.Should().NotBeEmpty().And.Contain(MensagensErros.NomeExcedeuLimiteMaximo);
+                });
+            }
+
         }
 
-        [Fact]
-        public void EmailDeveSerValido()
+        public class ServicoComConfiguracao
         {
-            // Arrange
-            var repo = new Mock<IRepositorioResponsaveis>();
-            var removedor = new Mock<IRemovedorResponsavel>();
-            var nome_incompleto = "Fulano de Tal";
-            var cpf = CPF_VALIDO;
-            var email = "fulano_deTal@teste.com.br";
-            var servico = new ServicoAplicacaoResponsaveis(repo.Object, removedor.Object);
-            var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+            private readonly Mock<IRepositorioResponsaveis> repo;
+            private readonly Mock<IRemovedorResponsavel> removedor;
+            private readonly Mock<IValidadorEmail> validadorEmail;
+            private readonly Mock<IValidadorCpf> validadorCpf;
+            private readonly ServicoAplicacaoResponsaveis servico;
 
-            // Act
-            var result = servico.CriaResponsavel(comando);
-
-            // Assert
-            result.State.Should().Be(EitherStatus.IsRight);
-            result.IfRight(e =>
+            public ServicoComConfiguracao()
             {
-                e.Email.Should().Be(email);
-            });
-        }
+                this.repo = new Mock<IRepositorioResponsaveis>();
+                this.removedor = new Mock<IRemovedorResponsavel>();
+                this.validadorEmail = new Mock<IValidadorEmail>();
+                this.validadorCpf = new Mock<IValidadorCpf>();
+                this.servico = new ServicoAplicacaoResponsaveis(
+                    repo.Object, removedor.Object, validadorEmail.Object, validadorCpf.Object);
+            }
 
-        [Fact]
-        public void EmailDeveTerNoMaximo400Caracteres()
-        {
-            // Arrange
-            var repo = new Mock<IRepositorioResponsaveis>();
-            var removedor = new Mock<IRemovedorResponsavel>();
-            var nome_incompleto = "Fulano de Tal";
-            var cpf = CPF_VALIDO;
-            var emailTamanhoMaximo = $"{StringTestsUtils.RandomString(350)}@{StringTestsUtils.RandomString(45)}.com";
-            var emailTamanhoMaximoExcedido = $"{StringTestsUtils.RandomString(350)}@${StringTestsUtils.RandomString(45)}.com.br";
-            var servico = new ServicoAplicacaoResponsaveis(repo.Object, removedor.Object);
-            var comandoValido = new ComandoCriaResponsavel(nome_incompleto, cpf, emailTamanhoMaximo);
-            var comandoInvalido = new ComandoCriaResponsavel(nome_incompleto, cpf, emailTamanhoMaximoExcedido);
-
-            // Act
-            var resultadoComEmailValido = servico.CriaResponsavel(comandoValido);
-            var resultadoComEmailInvalido = servico.CriaResponsavel(comandoInvalido);
-
-            // Assert
-            resultadoComEmailValido.State.Should().Be(EitherStatus.IsRight);
-            resultadoComEmailValido.IfRight(e =>
+            [Fact]
+            public void EmailDeveSerValido()
             {
-                e.Email.Should().Be(emailTamanhoMaximo);
-            });
-            resultadoComEmailInvalido.State.Should().Be(EitherStatus.IsLeft);
-            resultadoComEmailInvalido.IfLeft(e =>
+                // Arrange
+                var nome_incompleto = "Fulano de Tal";
+                var cpf = CPF_VALIDO;
+                var email = "fulano_deTal@teste.com.br";
+                var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+
+                validadorEmail
+                    .Setup(v => v.EmailValido(It.IsAny<string>()))
+                    .Returns(true);
+
+                validadorCpf
+                    .Setup(v => v.CpfValido(It.IsAny<string>()))
+                    .Returns(true);
+
+                repo
+                    .Setup(o => o.Salva(It.IsAny<Responsavel>()))
+                    .Returns((Responsavel a) => a);
+
+                repo
+                    .Setup(o => o.CpfJaCadastrado(It.IsAny<string>()))
+                    .Returns(false);
+
+                // Act
+                var result = servico.CriaResponsavel(comando);
+
+                // Assert
+                result.State.Should().Be(EitherStatus.IsRight);
+                result.IfRight(e =>
+                {
+                    e.Email.Should().Be(email);
+                });
+            }
+
+            [Fact]
+            public void CpfInvalido()
             {
-                e.Should().NotBeEmpty().And.Contain(MensagensErros.EmailExcedeuLimiteMaximo);
-            });
-        }
+                // Arrange
+                var nome_incompleto = "Fulano de Tal";
+                var cpf = "";
+                var email = "fulano_prestes_123@host.com";
+                var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
 
-        [Fact]
-        public void CpfObrigatorio()
-        {
-            // Arrange
-            var repo = new Mock<IRepositorioResponsaveis>();
-            var removedor = new Mock<IRemovedorResponsavel>();
-            var nome_incompleto = "Fulano de Tal";
-            var cpf = "";
-            var email = "fulano_prestes_123@host.com";
-            var servico = new ServicoAplicacaoResponsaveis(repo.Object, removedor.Object);
-            var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+                this.validadorCpf
+                    .Setup(v => v.CpfValido(It.IsAny<string>()))
+                    .Returns(false);
 
-            // Act
-            var result = servico.CriaResponsavel(comando);
+                // Act
+                var result = servico.CriaResponsavel(comando);
 
-            // Assert
-            result.State.Should().Be(EitherStatus.IsLeft);
-            result.IfLeft(e =>
+                // Assert
+                result.State.Should().Be(EitherStatus.IsLeft);
+                result.IfLeft(e =>
+                {
+                    e.Should().NotBeEmpty().And.Contain(MensagensErros.CpfNaoInformado);
+                });
+            }
+
+            [Fact]
+            public void Remocao_DeveFalharSeIdentificadorNaoExistir()
             {
-                e.Should().NotBeEmpty().And.Contain(MensagensErros.CpfNaoInformado);
-            });
-        }
+                var nome = "dbb656e9-3452-44ac-b33c-4b15ccee9277";
+                var comando = new ComandoRemoveResponsavel(nome);
+                Responsavel responsavel = null;
 
-        [Fact]
-        public void NomeObrigatorio()
-        {
-            // Arrange
-            var repo = new Mock<IRepositorioResponsaveis>();
-            var removedor = new Mock<IRemovedorResponsavel>();
-            var nome_incompleto = "Fulano";
-            var cpf = "51666109037";
-            var email = "fulano_prestes_123@host.com";
-            var servico = new ServicoAplicacaoResponsaveis(repo.Object, removedor.Object);
-            var comando = new ComandoCriaResponsavel(nome_incompleto, cpf, email);
+                removedor
+                    .Setup(o => o.Remove(It.Is<Guid>(x => x.ToString().Equals(nome))))
+                    .Returns(responsavel);
 
-            // Act
-            var result = servico.CriaResponsavel(comando);
+                // Act
+                var resultadoIdInexistente = servico.RemoveResponsavel(comando);
 
-            // Assert
-            result.State.Should().Be(EitherStatus.IsLeft);
-            result.IfLeft(e =>
-            {
-                e.Should().NotBeEmpty().And.Contain(MensagensErros.NomeCompletoNaoInformado);
-            });
-        }
-
-        [Fact]
-        public void NomeDeveTerNoMaximo150Caracteres()
-        {
-            var repo = new Mock<IRepositorioResponsaveis>();
-            var removedor = new Mock<IRemovedorResponsavel>();
-            var nomeTamanhoMaximo = $"{StringTestsUtils.RandomString(50)} {StringTestsUtils.RandomString(99)}";
-            var nomeTamanhoMaximoExcedido = $"{StringTestsUtils.RandomString(50)} {StringTestsUtils.RandomString(100)}";
-            var cpf = "51666109037";
-            var email = "fulano_prestes_123@host.com";
-            var servico = new ServicoAplicacaoResponsaveis(repo.Object, removedor.Object);
-            var comandoNomeValido = new ComandoCriaResponsavel(nomeTamanhoMaximo, cpf, email);
-            var comandoNomeInvalido = new ComandoCriaResponsavel(nomeTamanhoMaximoExcedido, cpf, email);
-
-            // Act
-            var resultadoComNomeValido = servico.CriaResponsavel(comandoNomeValido);
-            var resultadoComNomeInvalido = servico.CriaResponsavel(comandoNomeInvalido);
-
-            // Assert
-            resultadoComNomeValido.State.Should().Be(EitherStatus.IsRight);
-            resultadoComNomeInvalido.State.Should().Be(EitherStatus.IsLeft);
-            resultadoComNomeValido.IfRight(e =>
-            {
-                e.Nome.Should().Be(nomeTamanhoMaximo);
-            });
-            resultadoComNomeInvalido.IfLeft(e =>
-            {
-                e.Should().NotBeEmpty().And.Contain(MensagensErros.NomeExcedeuLimiteMaximo);
-            });
-        }
-
-        [Fact]
-        public void Remocao_DeveFalharSeIdentificadorNaoExistir()
-        {
-            var repo = new Mock<IRepositorioResponsaveis>();
-            var removedor = new Mock<IRemovedorResponsavel>();
-            var nome = "dbb656e9-3452-44ac-b33c-4b15ccee9277";
-            var servico = new ServicoAplicacaoResponsaveis(repo.Object, removedor.Object);
-            var comando = new ComandoRemoveResponsavel(nome);
-            Responsavel responsavel = null;
-
-            removedor
-                .Setup(o => o.Remove(It.Is<Guid>(x => x.ToString().Equals(nome))))
-                .Returns(responsavel);
-                
-            // Act
-            var resultadoIdInexistente = servico.RemoveResponsavel(comando);
-
-            // Assert
-            resultadoIdInexistente.State.Should().Be(EitherStatus.IsLeft);
-            resultadoIdInexistente.IfLeft(e =>
-            {
-                e.Should().NotBeEmpty().And.Contain(MensagensErros.RecursoNaoEncontrado);
-            });
+                // Assert
+                resultadoIdInexistente.State.Should().Be(EitherStatus.IsLeft);
+                resultadoIdInexistente.IfLeft(e =>
+                {
+                    e.Should().NotBeEmpty().And.Contain(MensagensErros.RecursoNaoEncontrado);
+                });
+            }
         }
     }
 }

@@ -9,6 +9,8 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
     {
         Either<IEnumerable<MensagensErros>, ResponsavelDTO> CriaResponsavel(ComandoCriaResponsavel cmd);
 
+        Either<IEnumerable<MensagensErros>, ResponsavelDTO> EditaResponsavel(ComandoEditaResponsavel cmd);
+
         Either<IEnumerable<MensagensErros>, ResponsavelDTO> RemoveResponsavel(ComandoRemoveResponsavel cmd);
     }
 }
