@@ -9,7 +9,8 @@ using MongoDB.Driver;
 
 namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
-    public class MongoDBRepositorioProcessos : ICriadorProcesso, IGeradorIdentificadorProcesso
+    public class MongoDBRepositorioProcessos : 
+        ICriadorProcesso, IGeradorIdentificadorProcesso, IRemovedorProcesso, IValidadorProcessoUnico
     {
         private readonly IContextoPersistencia contextoPersistencia;
         private readonly ILogger logger;
@@ -32,6 +33,7 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
             this.contextoPersistencia.Processos.InsertOne(umAgregado);
             return umAgregado;
         }
+
 
         public Responsavel Edita(Responsavel umResponsavel)
         {
@@ -70,11 +72,14 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 
         public Guid ObtemProximoId() => Guid.NewGuid();
 
-        public Responsavel Remove(Guid umId)
+        public bool ProcessoJaCadastrado(string processoUnificado) =>
+            this.contextoPersistencia.Processos.Find(r => r.ProcessoUnificado == processoUnificado).Any();
+
+        public Processo Remove(Guid umId)
         {
             return
                 this.contextoPersistencia
-                    .Responsaveis
+                    .Processos
                     .FindOneAndDelete(new BsonDocument()
                     {
                         { "_id", new BsonBinaryData(umId,  GuidRepresentation.Standard) }

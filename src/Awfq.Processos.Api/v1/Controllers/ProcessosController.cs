@@ -22,7 +22,7 @@ namespace Awfq.Processos.Api.v1.Controllers
         private readonly IServicoAplicacaoProcessos servicoAplicacaoProcessos;
 
         public ProcessosController(
-            ILogger<ProcessosController> logger, 
+            ILogger<ProcessosController> logger,
             IServicoConsultaProcessos servicoConsultaProcessos,
             IServicoAplicacaoProcessos servicoAplicacaoProcessos)
         {
@@ -36,8 +36,8 @@ namespace Awfq.Processos.Api.v1.Controllers
         {
             var comando = new ComandoCriaProcesso(
                 dto.ProcessoUnificado,
-                dto.DataDistribuicao, 
-                dto.SegredoJustica, 
+                dto.DataDistribuicao,
+                dto.SegredoJustica,
                 dto.PastaFisicaCliente,
                 dto.Responsaveis,
                 dto.SituacaoId,
@@ -46,7 +46,16 @@ namespace Awfq.Processos.Api.v1.Controllers
 
             var result = this.servicoAplicacaoProcessos.CriaProcesso(comando);
 
-            return result.Match(criadoNaRota, NecessarioCorrecaoEntrada);
+            return result.Match(CriadoNaRota, NecessarioCorrecaoEntrada);
+        }
+
+        [HttpDelete("{id}")]
+        public ActionResult<ProcessoDTO> RemoveProcesso(string id)
+        {
+            var comando = new ComandoRemoveProcesso(id);
+            var result = this.servicoAplicacaoProcessos.RemoveProcesso(comando);
+
+            return result.Match(Sucesso, LidaComFalhaRemocao);
         }
 
         [HttpGet("situacoes/")]
@@ -55,8 +64,15 @@ namespace Awfq.Processos.Api.v1.Controllers
             return this.servicoConsultaProcessos.ObtemSituacoes().ToArray();
         }
 
-        protected ActionResult<ProcessoDTO> criadoNaRota(ProcessoDTO r) => Ok(r);
+        protected ActionResult<ProcessoDTO> Sucesso(ProcessoDTO r) => Ok(r);
+
+        protected ActionResult<ProcessoDTO> CriadoNaRota(ProcessoDTO r) => Ok(r);
 
         protected ActionResult<ProcessoDTO> NecessarioCorrecaoEntrada(IEnumerable<MensagensErros> e) => BadRequest(e);
+
+        protected ActionResult<ProcessoDTO> LidaComFalhaRemocao(IEnumerable<MensagensErros> e)
+            => e.Contains(MensagensErros.RecursoNaoEncontrado)
+                ? (ActionResult<ProcessoDTO>)NoContent()
+                : (ActionResult<ProcessoDTO>)BadRequest(e);
     }
 }

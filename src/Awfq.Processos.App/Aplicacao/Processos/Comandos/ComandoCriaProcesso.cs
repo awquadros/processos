@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
 {
@@ -8,13 +9,28 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
     /// </sumary>
     public class ComandoCriaProcesso : IComandoCriaEditaProcesso
     {
+        private readonly Regex regex = new Regex("[^0-9$]");
+        private string processoUnificado;
+
         public string PaiId { get; private set; }
-        public string ProcessoUnificado { get; private set; }
-        public DateTime DataDistribuicao { get; private set; }
+
+        public string ProcessoUnificado 
+        { 
+            get => this.processoUnificado; 
+            private set => this.processoUnificado = string.IsNullOrWhiteSpace(value) 
+                ? value : regex.Replace(value, String.Empty); 
+        }
+
+        public DateTime? DataDistribuicao { get; private set; }
+
         public bool SegredoJustica { get; private set; }
+
         public string PastaFisicaCliente { get; private set; }
+
         public string Descricao { get; private set; }
+
         public IEnumerable<string> ResponsaveisIds { get; private set; }
+
         public int SituacaoId { get; private set; }
 
         /// <sumary>
@@ -43,7 +59,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             this.DataDistribuicao = dataDistribuicao;
             this.SegredoJustica = segredoJustica;
             this.PastaFisicaCliente = pastaFisicaCliente;
-            this.ResponsaveisIds = responsaveisIds;
+            this.ResponsaveisIds = responsaveisIds == null ? new string[] {} : responsaveisIds ;
             this.SituacaoId = situacaoId;
             this.Descricao = descricao;
         }

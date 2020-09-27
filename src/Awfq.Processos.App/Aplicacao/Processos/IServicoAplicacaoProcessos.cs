@@ -11,6 +11,6 @@ namespace Awfq.Processos.App.Aplicacao.Processos
 
         //Either<IEnumerable<MensagensErros>, ResponsavelDTO> EditaResponsavel(ComandoEditaResponsavel cmd);
 
-        //Either<IEnumerable<MensagensErros>, ResponsavelDTO> RemoveResponsavel(ComandoRemoveResponsavel cmd);
+        Either<IEnumerable<MensagensErros>, ProcessoDTO> RemoveProcesso(ComandoRemoveProcesso cmd);
     }
 }

@@ -10,7 +10,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
     {
         string PaiId { get; }
         string ProcessoUnificado { get; }
-        DateTime DataDistribuicao { get; }
+        DateTime? DataDistribuicao { get; }
         bool SegredoJustica { get; }
         string PastaFisicaCliente { get; }
         string Descricao { get; }

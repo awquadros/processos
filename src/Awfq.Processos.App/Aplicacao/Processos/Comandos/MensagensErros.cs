@@ -11,8 +11,8 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             new TipoErrosEntrada(0, "Dados do Comando não informados.");
         public static readonly MensagensErros NumeroProcessoUnificadoNaoInformado =
             new TipoErrosEntrada(1, "O número do Processo Unificado é obrigatório");
-        public static readonly MensagensErros NumeroProcessoUnificadoExcedeuLimiteMaximo =
-            new TipoErrosEntrada(2, "O número do Processo Unificado excedeu o limite máximo de 20 caracteres.");
+        public static readonly MensagensErros NumeroProcessoUnificadoMalFormatado =
+            new TipoErrosEntrada(2, "O número do Processo Unificado deve ter 20 caracteres.");
         public static readonly MensagensErros NumeroProcessoUnificadoDuplicado =
             new TipoErrosEntrada(3, "O número do Processo Unificado já existe.");
         public static readonly MensagensErros DataDistribuicaoInvalida =
@@ -23,7 +23,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             new TipoErrosEntrada(6, "A descrição excedeu o limite máximo de 1000 caracteres.");
         public static readonly MensagensErros SituacaoNaoInformada =
             new TipoErrosEntrada(7, "É obrigatório informar a Situação.");
-        public static readonly MensagensErros NumeroMinimoResponsaveisInfrigido = 
+        public static readonly MensagensErros ResponsavelNaoInformado = 
             new TipoErrosEntrada(8, "É obrigatório informar um Responsável.");
         public static readonly MensagensErros NumeroResponsaveisExcedeuLimite = 
             new TipoErrosEntrada(9, "O total de Responsáveis excedeu o limite de 3.");
@@ -33,6 +33,8 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             new TipoErrosEntrada(11, "Processo vinculado não deve pertenncer ao mesmo nível Hieraquico.");
         public static readonly MensagensErros IdentificadorMalFormatado =
             new TipoErrosEntrada(12, "É possível que um ou mais dos ids estejam mal formatados. Tenta refazer a requisição.");
+        public static readonly MensagensErros RecursoNaoEncontrado = new TipoErrosEntrada(13, "O Recurso não foi encontrado.");
+        public static readonly MensagensErros IdentificadorUnicoInvalido = new TipoErrosEntrada(14, "O identificador único é inválido.");
         public static readonly MensagensErros ErroNaoEsperado = 
             new TipoErrosEntrada(99, "Ocorreu um erro não esperado.");
 
