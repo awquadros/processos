@@ -43,7 +43,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             this.removedor = umRemovedor;
             this.editor = umEditor;
             this.logger = umLogger;
-            this.pipelineValidacaoCriacao = new PassoValidacao[] { 
+            this.pipelineValidacaoCriacao = new PassoValidacao[] {
                 ValidaResponsaveis, ValidaDescricao, ValidaPastaFisica, ValidaDataDistribuicao, ValidaProcessoUnificado };
             //this.pipelineValidacaoEdicao = new PassoValidacao[] { ValidaNome, ValidaApenasValorCpf, ValidaEmail };
         }
@@ -75,45 +75,49 @@ namespace Awfq.Processos.App.Aplicacao.Processos
         private PassoValidacao ValidaProcessoUnificadoNaoInformado => f =>
             NuloOuVazio(f.cmd.ProcessoUnificado) ? (f.erros.Append(MensagensErros.NumeroProcessoUnificadoNaoInformado), f.cmd) : f;
 
-        private PassoValidacao ValidaProcessoUnificadoLimite => f => 
+        private PassoValidacao ValidaProcessoUnificadoLimite => f =>
             NaoNulaOuVazia(f.cmd.ProcessoUnificado) && f.cmd.ProcessoUnificado.Length != 20
             ? (f.erros.Append(MensagensErros.NumeroProcessoUnificadoMalFormatado), f.cmd) : f;
 
         private PassoValidacao TalvezValideNumeroPrcessoNoCadastro => f =>
-            f.erros.Contains(MensagensErros.NumeroProcessoUnificadoNaoInformado) 
+            f.erros.Contains(MensagensErros.NumeroProcessoUnificadoNaoInformado)
             || f.erros.Contains(MensagensErros.NumeroProcessoUnificadoMalFormatado)
                 ? f : ValidaNumeroProcessoJaCadastrado(f);
 
-        private PassoValidacao ValidaNumeroProcessoJaCadastrado => f => 
+        private PassoValidacao ValidaNumeroProcessoJaCadastrado => f =>
             this.validadorProcessoUnico.ProcessoJaCadastrado(f.cmd.ProcessoUnificado)
             ? (f.erros.Append(MensagensErros.NumeroProcessoUnificadoDuplicado), f.cmd) : f;
 
-        private PassoValidacao ValidaProcessoUnificado => f => 
+        private PassoValidacao ValidaPaiNoMesmoNivel => f =>
+            this.validadorProcessoUnico.ProcessoJaCadastrado(f.cmd.ProcessoUnificado)
+            ? (f.erros.Append(MensagensErros.ProcessoNaMesmoNívelHierarquico), f.cmd) : f;
+
+        private PassoValidacao ValidaProcessoUnificado => f =>
             TalvezValideNumeroPrcessoNoCadastro(ValidaProcessoUnificadoLimite(ValidaProcessoUnificadoNaoInformado(f)));
 
-        private PassoValidacao ValidaDataDistribuicao => f => 
+        private PassoValidacao ValidaDataDistribuicao => f =>
             f.cmd.DataDistribuicao != null && f.cmd.DataDistribuicao.Value.Date > DateTime.Today
             ? (f.erros.Append(MensagensErros.DataDistribuicaoInvalida), f.cmd) : f;
 
-        private PassoValidacao ValidaPastaFisica => f => 
+        private PassoValidacao ValidaPastaFisica => f =>
             NaoNulaOuVazia(f.cmd.PastaFisicaCliente) && f.cmd.PastaFisicaCliente.Length > 50
             ? (f.erros.Append(MensagensErros.PastaFisicaExcedeuLimite), f.cmd) : f;
 
-        private PassoValidacao ValidaDescricao => f => 
+        private PassoValidacao ValidaDescricao => f =>
             NaoNulaOuVazia(f.cmd.Descricao) && f.cmd.Descricao.Length > 1000
             ? (f.erros.Append(MensagensErros.DescricaoExcedeuLimiteMaximo), f.cmd) : f;
 
-        private PassoValidacao ValidaResponsavelNaoInformado => f => 
+        private PassoValidacao ValidaResponsavelNaoInformado => f =>
             f.cmd.ResponsaveisIds.Length() == 0 ? (f.erros.Append(MensagensErros.ResponsavelNaoInformado), f.cmd) : f;
 
-        private PassoValidacao ValidaResponsavelExcedeuLimite => f => 
+        private PassoValidacao ValidaResponsavelExcedeuLimite => f =>
             f.cmd.ResponsaveisIds.Length() > 3 ? (f.erros.Append(MensagensErros.NumeroResponsaveisExcedeuLimite), f.cmd) : f;
 
-        private PassoValidacao ValidaResponsavelDuplicado => f => 
+        private PassoValidacao ValidaResponsavelDuplicado => f =>
             f.cmd.ResponsaveisIds.Count() != f.cmd.ResponsaveisIds.Distinct().Count()
                 ? (f.erros.Append(MensagensErros.ResponsavelDuplicado), f.cmd) : f;
 
-        private PassoValidacao ValidaResponsaveis => f => 
+        private PassoValidacao ValidaResponsaveis => f =>
             ValidaResponsavelDuplicado(ValidaResponsavelExcedeuLimite(ValidaResponsavelNaoInformado(f)));
 
         private (IEnumerable<MensagensErros>, IComandoCriaEditaProcesso) ExecutaPipelineValidacao(
@@ -128,7 +132,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos
 
         private Either<IEnumerable<MensagensErros>, IComandoCriaEditaProcesso> ValidaCriacao(
             in IComandoCriaEditaProcesso cmd)
-        { 
+        {
             (IEnumerable<MensagensErros> erros, _) = ExecutaPipelineValidacao(this.pipelineValidacaoCriacao, cmd);
 
             return erros.Any()
@@ -136,13 +140,20 @@ namespace Awfq.Processos.App.Aplicacao.Processos
                 : Right<IEnumerable<MensagensErros>, IComandoCriaEditaProcesso>(cmd);
         }
 
+        private Guid? toNullableGuid(string possivelGuid)
+        {
+            if (string.IsNullOrWhiteSpace(possivelGuid))
+                return null;
+
+            return new Guid(possivelGuid);
+        }
 
         private Either<IEnumerable<MensagensErros>, ProcessoDTO> ProcedeCriacao(IComandoCriaEditaProcesso cmd)
         {
             try
             {
                 var id = this.geradorIdentificador.ObtemProximoId();
-                var paiId = string.IsNullOrWhiteSpace(cmd.PaiId) ? Guid.Empty : new Guid(cmd.PaiId);
+                var paiId = toNullableGuid(cmd.PaiId);
                 var responsaveis = cmd.ResponsaveisIds?.Select(r => new Guid(r));
                 var processo = new Processo(
                     id,
@@ -178,6 +189,15 @@ namespace Awfq.Processos.App.Aplicacao.Processos
         {
             return new ProcessoDTO()
             {
+                Id = processo.Id,
+                PaiId = processo.PaiId,
+                DataDistribuicao = processo.DataDistribuicao,
+                Descricao = processo.Descricao,
+                PastaFisicaCliente = processo.PastaFisicaCliente,
+                ProcessoUnificado = processo.ProcessoUnificado,
+                SegredoJustica = processo.SegredoJustica,
+                Responsaveis = processo.ResponsaveisIds,
+                SituacaoId = processo.SituacaoId
             };
         }
 

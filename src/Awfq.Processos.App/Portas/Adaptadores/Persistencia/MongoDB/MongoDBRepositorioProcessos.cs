@@ -10,7 +10,8 @@ using MongoDB.Driver;
 namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
     public class MongoDBRepositorioProcessos : 
-        ICriadorProcesso, IGeradorIdentificadorProcesso, IRemovedorProcesso, IValidadorProcessoUnico
+        ICriadorProcesso, IGeradorIdentificadorProcesso, IRemovedorProcesso, IValidadorProcessoUnico, 
+        IValidadorHierarquico
     {
         private readonly IContextoPersistencia contextoPersistencia;
         private readonly ILogger logger;
@@ -68,6 +69,11 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
             this.logger.LogInformation((result == null).ToString());
 
                     return result;
+        }
+
+        public bool EstaNaMesmaHierarquia(string umId)
+        {
+            throw new NotImplementedException();
         }
 
         public Guid ObtemProximoId() => Guid.NewGuid();

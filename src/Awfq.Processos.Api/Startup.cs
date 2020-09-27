@@ -103,6 +103,7 @@ namespace Awfq.Processos.Api
             container.Register<ICriadorProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.Register<IGeradorIdentificadorProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.Register<IRemovedorProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
+            container.Register<IValidadorProcessoUnico, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.RegisterInstance<ConfiguracoesMongoDb>(configuracoesMongoDb);
         }
 
