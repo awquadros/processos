@@ -6,6 +6,7 @@ using Awfq.Processos.App.Aplicacao.Processos.Dados;
 using Awfq.Processos.App.Aplicacao.Processos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Awfq.Processos.App.Aplicacao.Processos.Comandos;
 
 namespace Awfq.Processos.Api.v1.Controllers
 {
@@ -14,20 +15,48 @@ namespace Awfq.Processos.Api.v1.Controllers
     [Route("api/[controller]")]
     public class ProcessosController : ControllerBase
     {
-        private readonly ILogger<ProcessosController> _logger;
+        private readonly ILogger<ProcessosController> logger;
 
-        private readonly IServicoConsultaProcessos _servicoConsultaProcessos;
+        private readonly IServicoConsultaProcessos servicoConsultaProcessos;
 
-        public ProcessosController(ILogger<ProcessosController> logger, IServicoConsultaProcessos servicoConsultaProcessos)
+        private readonly IServicoAplicacaoProcessos servicoAplicacaoProcessos;
+
+        public ProcessosController(
+            ILogger<ProcessosController> logger, 
+            IServicoConsultaProcessos servicoConsultaProcessos,
+            IServicoAplicacaoProcessos servicoAplicacaoProcessos)
         {
-            _logger = logger;
-            _servicoConsultaProcessos = servicoConsultaProcessos;
+            this.logger = logger;
+            this.servicoConsultaProcessos = servicoConsultaProcessos;
+            this.servicoAplicacaoProcessos = servicoAplicacaoProcessos;
+        }
+
+        [HttpPost]
+        public ActionResult<ProcessoDTO> CriaProcesso([FromBody] NovoProcessoDTO dto)
+        {
+            var comando = new ComandoCriaProcesso(
+                dto.ProcessoUnificado,
+                dto.DataDistribuicao, 
+                dto.SegredoJustica, 
+                dto.PastaFisicaCliente,
+                dto.Responsaveis,
+                dto.SituacaoId,
+                dto.Descricao,
+                dto.PaiId);
+
+            var result = this.servicoAplicacaoProcessos.CriaProcesso(comando);
+
+            return result.Match(criadoNaRota, NecessarioCorrecaoEntrada);
         }
 
         [HttpGet("situacoes/")]
         public IEnumerable<SituacaoDTO> Get()
         {
-            return _servicoConsultaProcessos.ObtemSituacoes().ToArray();
+            return this.servicoConsultaProcessos.ObtemSituacoes().ToArray();
         }
+
+        protected ActionResult<ProcessoDTO> criadoNaRota(ProcessoDTO r) => Ok(r);
+
+        protected ActionResult<ProcessoDTO> NecessarioCorrecaoEntrada(IEnumerable<MensagensErros> e) => BadRequest(e);
     }
 }

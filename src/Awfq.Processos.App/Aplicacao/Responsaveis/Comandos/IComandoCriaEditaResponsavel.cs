@@ -1,5 +1,3 @@
-using System;
-
 namespace Awfq.Processos.App.Aplicacao.Responsaveis.Comandos
 {
     /// <sumary>

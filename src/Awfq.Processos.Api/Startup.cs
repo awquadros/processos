@@ -23,6 +23,7 @@ using MongoDB.Driver;
 using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB.Abstracoes;
 using Awfq.Comuns;
 using Awfq.Processos.App.Utils;
+using Awfq.Processos.App.Dominio.Modelo.Processos;
 
 namespace Awfq.Processos.Api
 {
@@ -92,14 +93,16 @@ namespace Awfq.Processos.Api
             // Add application services. For instance:
             container.Register<IServicoConsultaProcessos, ServicoConsultaProcessos>(Lifestyle.Transient);
             container.Register<IServicoAplicacaoResponsaveis, ServicoAplicacaoResponsaveis>(Lifestyle.Transient);
+            container.Register<IServicoAplicacaoProcessos, ServicoAplicacaoProcessos>(Lifestyle.Transient);
             container.Register<IRepositorioResponsaveis, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
             container.Register<IRemovedorResponsavel, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
             container.Register<IEditorResponsavel, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
             container.Register<IServicoConsultaResponsaveis, ServicoConsultaResponsaveis>(Lifestyle.Transient);
             container.Register<IValidadorEmail, ValidadorEmail>(Lifestyle.Transient);
             container.Register<IValidadorCpf, ValidadorCpf>(Lifestyle.Transient);
+            container.Register<ICriadorProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
+            container.Register<IGeradorIdentificadorProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.RegisterInstance<ConfiguracoesMongoDb>(configuracoesMongoDb);
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
