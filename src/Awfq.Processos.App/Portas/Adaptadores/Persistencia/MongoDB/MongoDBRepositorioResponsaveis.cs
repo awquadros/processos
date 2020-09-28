@@ -65,7 +65,10 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 
         public bool FazParteDeProcesso(Guid umId)
         {
-            // db.getCollection("processos").aggregate([ { $project: { ResponsaveisIds: { $filter: { input: "$ResponsaveisIds", as: "item", cond: { $eq: ["$$item", BinData(3,"mUTCwFT0B063HN7a92uemw==") ]  } } } } }, { $count: "total" } ])
+            // db.getCollection("processos").aggregate([ { $project: { "_id": 0,  ResponsaveisIds: { $filter: { input: "$ResponsaveisIds", 
+            // as: "item", cond: { $eq: ["$$item", BinData(3,"AlcB6StI3kiMD+QhiIArFw==") ]}}}}}, { $project: {ResponsaveisIds: 1, Size: {$size: "$ResponsaveisIds"} } }, 
+            // { $match: { Size: {$gt: 0} }}, { $count: "total" } ])
+
             BsonDocument filter = new BsonDocument() {
                 { "$filter", new BsonDocument()
                     { 
@@ -89,6 +92,27 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
                         }
                     }
                 },
+                new BsonDocument() 
+                {
+                    { "$project", new BsonDocument()
+                        { 
+                            { "ResponsaveisIds", 1 },
+                            { "Size", new BsonDocument(){ { "$size", "$ResponsaveisIds" } } }
+                        }
+                    }
+                },
+                new BsonDocument() 
+                {
+                    { "$match", new BsonDocument()
+                        { 
+                            { "Size", new BsonDocument() 
+                                { 
+                                    { "$gt", 0 } 
+                                } 
+                            } 
+                        }
+                    }
+                },
                 new BsonDocument()
                 {
                     { "$count", "total" }
@@ -99,11 +123,12 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
                 this.contextoPersistencia
                     .Processos
                     .Aggregate(pipeline)
-                    .First();
+                    .ToList()
+                    .Any();
 
-            int total = resultado.total;
+            this.logger.LogInformation("**************************************" + resultado.ToString());
 
-            return total > 0;
+            return resultado;
         }
 
         public Guid ObtemProximoId() => Guid.NewGuid();
