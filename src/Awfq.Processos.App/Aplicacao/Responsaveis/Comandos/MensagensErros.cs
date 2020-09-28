@@ -18,6 +18,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis.Comandos
         public static readonly MensagensErros EmailNaoInformado = new TipoErrosEntrada(8, "O E-mail é obrigatório.");
         public static readonly MensagensErros IdentificadorUnicoInvalido = new TipoErrosEntrada(9, "O identificador único é inválido.");
         public static readonly MensagensErros RecursoNaoEncontrado = new TipoErrosEntrada(10, "O Recurso não foi encontrado.");
+        public static readonly MensagensErros ExisteVinculoProcessual = new TipoErrosEntrada(11, "O Responsável está vinculado a um ou mais processos.");
         public static readonly MensagensErros ErroNaoEsperado = new TipoErrosEntrada(99, "Ocorreu um erro não esperado.");
 
         /// <sumary>

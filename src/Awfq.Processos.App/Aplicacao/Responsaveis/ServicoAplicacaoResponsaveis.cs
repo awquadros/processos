@@ -23,6 +23,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
         private readonly IValidadorCpf validadorCpf;
         private readonly IEnumerable<PassoValidacao> pipelineValidacaoCriacao;
         private readonly IEnumerable<PassoValidacao> pipelineValidacaoEdicao;
+        private readonly IValidadorRemocaoResponsavel validadorRemocao;
 
         delegate (IEnumerable<MensagensErros>, IComandoCriaEditaResponsavel) PassoValidacao(
             (IEnumerable<MensagensErros> erros, IComandoCriaEditaResponsavel cmd) fluxo);
@@ -32,13 +33,14 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
         /// </sumary>
         public ServicoAplicacaoResponsaveis(
             IRepositorioResponsaveis umRepositorio, IRemovedorResponsavel umRemovedor, IEditorResponsavel umEditor,
-            IValidadorEmail umValidadorEmail, IValidadorCpf umValidadorCpf)
+            IValidadorEmail umValidadorEmail, IValidadorCpf umValidadorCpf, IValidadorRemocaoResponsavel validadorRemocao)
         {
             this.repositorio = umRepositorio;
             this.removedor = umRemovedor;
             this.editor = umEditor;
             this.validadorEmail = umValidadorEmail;
             this.validadorCpf = umValidadorCpf;
+            this.validadorRemocao = validadorRemocao;
             this.pipelineValidacaoCriacao = new PassoValidacao[] { ValidaNome, ValidaCpf, ValidaEmail };
             this.pipelineValidacaoEdicao = new PassoValidacao[] { ValidaNome, ValidaApenasValorCpf, ValidaEmail };
         }
@@ -181,6 +183,9 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
             if (!Guid.TryParse(cmd.Id, out Guid id))
                 erros.Add(MensagensErros.IdentificadorUnicoInvalido);
 
+            if (id != Guid.Empty && this.validadorRemocao.FazParteDeProcesso(id))
+                erros.Add(MensagensErros.ExisteVinculoProcessual);
+                
             return erros.Any()
                 ? Left<IEnumerable<MensagensErros>, ComandoRemoveResponsavel>(erros)
                 : Right<IEnumerable<MensagensErros>, ComandoRemoveResponsavel>(cmd);
