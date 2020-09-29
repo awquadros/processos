@@ -25,8 +25,8 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
                 var removedor = new Mock<IRemovedorResponsavel>().Object;
                 var editor = new Mock<IEditorResponsavel>().Object;
                 var validadorEmail = new Mock<IValidadorEmail>();
-                //var validadorCpf = new ValidadorCpf();
                 var validadorCpf = new Mock<IValidadorCpf>();
+                var validadorRemocao = new Mock<IValidadorRemocaoResponsavel>();
 
                 repo
                     .Setup(o => o.Salva(It.IsAny<Responsavel>()))
@@ -44,8 +44,12 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
                     .Setup(v => v.CpfValido(It.IsAny<string>()))
                     .Returns(true);
 
+                validadorRemocao
+                    .Setup(v => v.FazParteDeProcesso(It.IsAny<Guid>()))
+                    .Returns(false);
+
                 this.servico = new ServicoAplicacaoResponsaveis(
-                    repo.Object, removedor, editor, validadorEmail.Object, validadorCpf.Object);
+                    repo.Object, removedor, editor, validadorEmail.Object, validadorCpf.Object, validadorRemocao.Object);
             }
 
             [Fact]
@@ -210,6 +214,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             private readonly Mock<IRemovedorResponsavel> removedor;
             private readonly Mock<IValidadorEmail> validadorEmail;
             private readonly Mock<IValidadorCpf> validadorCpf;
+            private readonly Mock<IValidadorRemocaoResponsavel> validadorRemocao;
             private readonly ServicoAplicacaoResponsaveis servico;
             private readonly Mock<IEditorResponsavel> editor;
 
@@ -220,8 +225,9 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
                 this.editor = new Mock<IEditorResponsavel>();
                 this.validadorEmail = new Mock<IValidadorEmail>();
                 this.validadorCpf = new Mock<IValidadorCpf>();
+                this.validadorRemocao = new Mock<IValidadorRemocaoResponsavel>();
                 this.servico = new ServicoAplicacaoResponsaveis(
-                    repo.Object, removedor.Object, editor.Object, validadorEmail.Object, validadorCpf.Object);
+                    repo.Object, removedor.Object, editor.Object, validadorEmail.Object, validadorCpf.Object, validadorRemocao.Object);
             }
 
             [Fact]

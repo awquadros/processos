@@ -30,7 +30,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis.Comandos
         /// <sumary>
         /// Obtém um valor indicando o Nome da Situação
         /// </sumary>
-        public abstract string Nome { get; }
+        public abstract string Mensagem { get; }
 
         /// <sumary>
         /// Evita que a classe seja instânciada por clientes
@@ -45,7 +45,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis.Comandos
             {
             }
 
-            public override string Nome => this.Name;
+            public override string Mensagem => this.Name;
 
             public override int MensagemId => this.Id;
         }

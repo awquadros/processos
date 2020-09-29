@@ -23,11 +23,11 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             new TipoErrosEntrada(6, "A descrição excedeu o limite máximo de 1000 caracteres.");
         public static readonly MensagensErros SituacaoNaoInformada =
             new TipoErrosEntrada(7, "É obrigatório informar a Situação.");
-        public static readonly MensagensErros ResponsavelNaoInformado = 
+        public static readonly MensagensErros ResponsavelNaoInformado =
             new TipoErrosEntrada(8, "É obrigatório informar um Responsável.");
-        public static readonly MensagensErros NumeroResponsaveisExcedeuLimite = 
+        public static readonly MensagensErros NumeroResponsaveisExcedeuLimite =
             new TipoErrosEntrada(9, "O total de Responsáveis excedeu o limite de 3.");
-        public static readonly MensagensErros ResponsavelDuplicado = 
+        public static readonly MensagensErros ResponsavelDuplicado =
             new TipoErrosEntrada(10, "Não é permitido Responsável duplicado.");
         public static readonly MensagensErros ProcessoNaMesmoNívelHierarquico =
             new TipoErrosEntrada(11, "Processo vinculado não deve pertenncer ao mesmo nível Hieraquico.");
@@ -35,7 +35,9 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             new TipoErrosEntrada(12, "É possível que um ou mais dos ids estejam mal formatados. Tenta refazer a requisição.");
         public static readonly MensagensErros RecursoNaoEncontrado = new TipoErrosEntrada(13, "O Recurso não foi encontrado.");
         public static readonly MensagensErros IdentificadorUnicoInvalido = new TipoErrosEntrada(14, "O identificador único é inválido.");
-        public static readonly MensagensErros ErroNaoEsperado = 
+        public static readonly MensagensErros ProcessoJaFinalizado = new TipoErrosEntrada(15, "A Situação do Processo não permite remoção.");
+        public static readonly MensagensErros RemocaoDeProcessoPaiNaoPermitida = new TipoErrosEntrada(16, "Não é permitida remoção de uma processo Pai.");
+        public static readonly MensagensErros ErroNaoEsperado =
             new TipoErrosEntrada(99, "Ocorreu um erro não esperado.");
 
         /// <sumary>
@@ -47,7 +49,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
         /// <sumary>
         /// Obtém um valor indicando o Nome da Situação
         /// </sumary>
-        public abstract string Nome { get; }
+        public abstract string Mensagem { get; }
 
         /// <sumary>
         /// Evita que a classe seja instânciada por clientes
@@ -62,7 +64,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             {
             }
 
-            public override string Nome => this.Name;
+            public override string Mensagem => this.Name;
 
             public override int MensagemId => this.Id;
         }

@@ -11,7 +11,7 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
     public class MongoDBRepositorioProcessos : 
         ICriadorProcesso, IGeradorIdentificadorProcesso, IRemovedorProcesso, IValidadorProcessoUnico, 
-        IValidadorHierarquico
+        IValidadorHierarquico, IValidadorProcessoPai, IValidadorSituacaoRemocao
     {
         private readonly IContextoPersistencia contextoPersistencia;
         private readonly ILogger logger;
@@ -22,6 +22,11 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
             this.contextoPersistencia = umContextoPersistencia;
             this.logger = umLogger;
         }
+
+        public bool JaFinalizado(Guid umProcessoId) =>
+            this.contextoPersistencia.Processos.Find(
+                p => p.Id == umProcessoId && (p.SituacaoId == 4 || p.SituacaoId == 5 )).Any();
+        
 
         /// <sumary>
         /// Dado um CPF, verifica se um determinado Responsavel existe na base de dados
@@ -77,6 +82,10 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
         }
 
         public Guid ObtemProximoId() => Guid.NewGuid();
+
+        public bool ProcessoEhPai(Guid umProcessoId) =>
+            this.contextoPersistencia.Processos.Find(p => p.PaiId == umProcessoId).Any();
+        
 
         public bool ProcessoJaCadastrado(string processoUnificado) =>
             this.contextoPersistencia.Processos.Find(r => r.ProcessoUnificado == processoUnificado).Any();

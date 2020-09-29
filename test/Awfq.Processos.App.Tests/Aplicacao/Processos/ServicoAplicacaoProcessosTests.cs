@@ -18,13 +18,18 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
         private const string ProcessoUnificadoValidoFormatado = "3513038-00.2016.8.23.0023";
         private const string ProcessoUnificadoValido = "35130380020168230023";
         private const string PastaFisicaCliente = "Pas0014";
+        private string responsavelId = Guid.NewGuid().ToString();
+
         private readonly Mock<ILogger> logger;
         private readonly Mock<ICriadorProcesso> criador;
         private readonly Mock<IGeradorIdentificadorProcesso> geradorIdentificador;
         private readonly Mock<IRemovedorProcesso> removedor;
         private readonly Mock<IEditorResponsavel> editor;
         private readonly Mock<IValidadorProcessoUnico> validadorProcessoUnico;
+        private readonly Mock<IValidadorProcessoPai> validadorProcessoPai;
+        private readonly Mock<IValidadorSituacaoRemocao> validadorSituacaoRemocao;
         private readonly IServicoAplicacaoProcessos servico;
+
 
         public ServicoAplicacaoProcessosTests()
         {
@@ -34,14 +39,20 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             this.removedor = new Mock<IRemovedorProcesso>();
             this.editor = new Mock<IEditorResponsavel>();
             this.validadorProcessoUnico = new Mock<IValidadorProcessoUnico>();
-
+            this.validadorProcessoPai = new Mock<IValidadorProcessoPai>();
+            this.validadorSituacaoRemocao = new Mock<IValidadorSituacaoRemocao>();
             this.servico = new ServicoAplicacaoProcessos(
                 validadorProcessoUnico.Object,
+                validadorProcessoPai.Object,
+                validadorSituacaoRemocao.Object,
                 criador.Object,
                 geradorIdentificador.Object,
                 removedor.Object,
                 editor.Object,
                 logger.Object);
+
+            this.validadorProcessoPai.Setup(x => x.ProcessoEhPai(It.IsAny<Guid>())).Returns(false);
+            this.criador.Setup(x => x.Cria(It.IsAny<Processo>())).Returns((Processo x) => x);
         }
 
         [Fact]
@@ -51,7 +62,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             var processoUnificadoInvalido = string.Empty;
             var dataDistribuicao = DateTime.Now;
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -87,7 +98,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             // Arrange
             var dataDistribuicao = DateTime.Now;
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -118,7 +129,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             // Arrange
             var dataDistribuicao = DateTime.Now;
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -140,12 +151,12 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
         }
 
         [Fact]
-        public void NumeroProcessoUnificadoDevePodeEstarFormatado()
+        public void NumeroProcessoUnificadoPodeEstarFormatado()
         {
             // Arrange
             var dataDistribuicao = DateTime.Now;
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -173,7 +184,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             var dataAtual = DateTime.Now;
             var dataDistribuicao = dataAtual.AddDays(1);
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -205,7 +216,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             var dataAtual = DateTime.Now;
             var dataDistribuicao = dataAtual.AddDays(-1);
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -232,7 +243,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             // Arrange
             var dataDistribuicao = DateTime.Today;
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -260,7 +271,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             var dataDistribuicao = DateTime.Today;
             var pastaFisicaCliente = StringTestsUtils.RandomString(51);
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -292,7 +303,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             var dataDistribuicao = DateTime.Today;
             var pastaFisicaCliente = StringTestsUtils.RandomString(50);
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = string.Empty;
             var paiId = string.Empty;
@@ -319,7 +330,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             // Arrange
             var dataDistribuicao = DateTime.Today;
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = StringTestsUtils.RandomString(1001); ;
             var paiId = string.Empty;
@@ -350,7 +361,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             // Arrange
             var dataDistribuicao = DateTime.Today;
             var segredoJustica = false;
-            var responsaveisIds = new string[] { "" };
+            var responsaveisIds = new string[] { responsavelId };
             var situacaoId = Situacao.EmAndamento.SituacaoId;
             var descricao = StringTestsUtils.RandomString(1000); ;
             var paiId = string.Empty;

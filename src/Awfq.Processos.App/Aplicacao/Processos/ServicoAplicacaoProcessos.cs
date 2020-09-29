@@ -23,6 +23,8 @@ namespace Awfq.Processos.App.Aplicacao.Processos
         private readonly IRemovedorProcesso removedor;
         private readonly IEditorResponsavel editor;
         private readonly IValidadorProcessoUnico validadorProcessoUnico;
+        IValidadorProcessoPai validadorProcessoPai;
+        IValidadorSituacaoRemocao validadorSituacaoRemocao;
         private readonly IEnumerable<PassoValidacao> pipelineValidacaoCriacao;
         //private readonly IEnumerable<PassoValidacao> pipelineValidacaoEdicao;
 
@@ -33,11 +35,14 @@ namespace Awfq.Processos.App.Aplicacao.Processos
         /// Inicia uma nova isntância da classe <see cref="ServicoAplicacaoProcessos" />
         /// </sumary>
         public ServicoAplicacaoProcessos(
-            IValidadorProcessoUnico umValidadorProcessoUnico,
+            IValidadorProcessoUnico umValidadorProcessoUnico, IValidadorProcessoPai umValidadorProcessoPai, 
+            IValidadorSituacaoRemocao umValidadorSituacaoRemocao,
             ICriadorProcesso umCriador, IGeradorIdentificadorProcesso umGeradorIdentificador,
             IRemovedorProcesso umRemovedor, IEditorResponsavel umEditor, ILogger umLogger)
         {
             this.validadorProcessoUnico = umValidadorProcessoUnico;
+            this.validadorProcessoPai = umValidadorProcessoPai;
+            this.validadorSituacaoRemocao = umValidadorSituacaoRemocao;
             this.criador = umCriador;
             this.geradorIdentificador = umGeradorIdentificador;
             this.removedor = umRemovedor;
@@ -210,6 +215,12 @@ namespace Awfq.Processos.App.Aplicacao.Processos
 
             if (!Guid.TryParse(cmd.Id, out Guid id))
                 erros.Add(MensagensErros.IdentificadorUnicoInvalido);
+
+            if (id != Guid.Empty && this.validadorProcessoPai.ProcessoEhPai(id))
+                erros.Add(MensagensErros.RemocaoDeProcessoPaiNaoPermitida);
+
+            if (id != Guid.Empty && this.validadorSituacaoRemocao.JaFinalizado(id))
+                erros.Add(MensagensErros.ProcessoJaFinalizado);
 
             return erros.Any()
                 ? Left<IEnumerable<MensagensErros>, ComandoRemoveProcesso>(erros)

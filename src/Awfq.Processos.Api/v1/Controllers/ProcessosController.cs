@@ -31,6 +31,28 @@ namespace Awfq.Processos.Api.v1.Controllers
             this.servicoAplicacaoProcessos = servicoAplicacaoProcessos;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProcessoConsultadoDTO>>> ConsultaProcessos(
+            [FromQuery] string processoUnificado, [FromQuery] DateTime? dataInicialDistribuicao, 
+            [FromQuery] DateTime? dataFinalDistribuicao, [FromQuery] bool? segredoJustica,
+            [FromQuery] string parcialPastaFisica, [FromQuery] short? situacaoId, 
+            [FromQuery] string parcialNomeResponsavel)
+        {
+            var result = 
+                await this
+                    .servicoConsultaProcessos
+                    .ConsultaAsync(
+                        processoUnificado, 
+                        dataInicialDistribuicao, 
+                        dataFinalDistribuicao,
+                        segredoJustica,
+                        parcialPastaFisica,
+                        situacaoId,
+                        parcialNomeResponsavel);
+
+            return result.Match(RetornaConsulta, LidaComFalhaConsulta);
+        }
+
         [HttpPost]
         public ActionResult<ProcessoDTO> CriaProcesso([FromBody] NovoProcessoDTO dto)
         {
@@ -74,5 +96,10 @@ namespace Awfq.Processos.Api.v1.Controllers
             => e.Contains(MensagensErros.RecursoNaoEncontrado)
                 ? (ActionResult<ProcessoDTO>)NoContent()
                 : (ActionResult<ProcessoDTO>)BadRequest(e);
+
+        protected ActionResult<IEnumerable<ProcessoConsultadoDTO>> RetornaConsulta(IEnumerable<ProcessoConsultadoDTO> r) => Ok(r);
+
+        protected ActionResult<IEnumerable<ProcessoConsultadoDTO>> LidaComFalhaConsulta(IEnumerable<MensagensErros> e) 
+            => StatusCode(500, e);
     }
 }
