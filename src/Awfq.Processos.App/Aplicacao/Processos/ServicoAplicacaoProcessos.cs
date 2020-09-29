@@ -4,7 +4,6 @@ using System.Linq;
 using Awfq.Processos.App.Aplicacao.Processos.Comandos;
 using Awfq.Processos.App.Aplicacao.Processos.Dados;
 using Awfq.Processos.App.Dominio.Modelo.Processos;
-using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 
@@ -338,15 +337,10 @@ namespace Awfq.Processos.App.Aplicacao.Processos
                             new MensagensErros[] { MensagensErros.RecursoNaoEncontrado })
                         : Right<IEnumerable<MensagensErros>, ProcessoDTO>(CriarDesse(processo));
             }
-            catch (Exception ex) when (ex is ArgumentNullException || ex is FormatException || ex is OverflowException)
-            {
-                this.logger.LogWarning(ex, ex.Message, cmd);
-                return Left<IEnumerable<MensagensErros>, ProcessoDTO>(new MensagensErros[] { MensagensErros.IdentificadorMalFormatado });
-            }
             catch (Exception ex)
             {
                 this.logger.LogError(ex, ex.Message, cmd);
-                return Left<IEnumerable<MensagensErros>, ProcessoDTO>(new MensagensErros[] { MensagensErros.RecursoNaoEncontrado });
+                return Left<IEnumerable<MensagensErros>, ProcessoDTO>(new MensagensErros[] { MensagensErros.ErroNaoEsperado });
             }
         }
     }
