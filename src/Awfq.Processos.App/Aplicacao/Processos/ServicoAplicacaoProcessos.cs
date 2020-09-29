@@ -89,8 +89,9 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             NaoNulaOuVazia(f.cmd.ProcessoUnificado) && f.cmd.ProcessoUnificado.Length != 20
             ? (f.erros.Append(MensagensErros.NumeroProcessoUnificadoMalFormatado), f.cmd) : f;
 
-        private PassoValidacao TalvezValideNumeroPrcessoNoCadastro => f => f.cmd switch {
-            ComandoCriaProcesso cmd => 
+        private PassoValidacao TalvezValideNumeroPrcessoNoCadastro => f => f.cmd switch
+        {
+            ComandoCriaProcesso cmd =>
                 f.erros.Contains(MensagensErros.NumeroProcessoUnificadoNaoInformado)
                 || f.erros.Contains(MensagensErros.NumeroProcessoUnificadoMalFormatado)
                     ? f : ValidaNumeroProcessoJaCadastrado(f),
@@ -241,13 +242,13 @@ namespace Awfq.Processos.App.Aplicacao.Processos
                     paiId);
 
                 var processo = this.obtendorProcessoPorId.ObtemProcessoPorId(guid);
+
+                if (processo == null) 
+                    return Left<IEnumerable<MensagensErros>, ProcessoDTO>(
+                        new MensagensErros[] { MensagensErros.RecursoNaoEncontrado });
+
                 var novosResponsaveis = responsaveisIds.Except(processo.ResponsaveisIds).ToArray();
                 var haNovosResponsaveis = novosResponsaveis.Length > 0;
-
-                foreach (var item in novosResponsaveis)
-                {
-                    this.logger.LogInformation(item.ToString());                    
-                }
 
                 var responsaveis = this.obtentorResponsavel
                     .ObtemResponsaveis(novosResponsaveis)
@@ -330,12 +331,27 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             try
             {
                 var guid = new Guid(cmd.Id);
-                var processo = this.removedor.Remove(guid);
+                var processoRemovido = this.removedor.Remove(guid);
 
-                return processo == null
-                        ? Left<IEnumerable<MensagensErros>, ProcessoDTO>(
-                            new MensagensErros[] { MensagensErros.RecursoNaoEncontrado })
-                        : Right<IEnumerable<MensagensErros>, ProcessoDTO>(CriarDesse(processo));
+                if (processoRemovido != null)
+                {
+                    var responsaveis = this.obtentorResponsavel
+                        .ObtemResponsaveis(processoRemovido.ResponsaveisIds.ToArray())
+                        .Select(x => (x.Nome, x.Email));
+
+                    var notificacao = new NotificacaoResponsavel(
+                        "Notificação de Processo",
+                        $"Você foi adicionado como envolvido no processo de número {processoRemovido.ProcessoUnificado}."
+                    );
+
+                    this.notificadorResponsavel.NotificarAsync(notificacao, responsaveis);
+
+                    return Right<IEnumerable<MensagensErros>, ProcessoDTO>(CriarDesse(processoRemovido));
+                } else 
+                {
+                    return Left<IEnumerable<MensagensErros>, ProcessoDTO>(
+                            new MensagensErros[] { MensagensErros.RecursoNaoEncontrado });
+                }
             }
             catch (Exception ex)
             {
