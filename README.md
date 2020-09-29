@@ -3,24 +3,35 @@
 
 ### Como rodar a aplicação
 
-A aplicação foi contairizada usando Docker, por isso desse ponto em diante vamos 
+A aplicação foi desenvolvida usando Docker, por isso desse ponto em diante vamos 
 assumir que você tenha o Docker instalado na sua máquina. Caso você ainda não tenha o Docker
 instalado (are you from the past? [Trenneman, Roy - IT Crowd]), por favor, visite o site 
 [https://docs.docker.com/get-docker/]("https://docs.docker.com/get-docker/")
 
-Na raíz do projeto, onde o Dockerfile se encontra, execute o seguinte comando num terminal:
+Abra um terminal (Bash, CMD, Powershell) e navegue até o diretório onde o você clonou o projeto.
+Na raíz do projeto, onde o arquivo docker-compose.yaml se encontra, execute o seguinte comando:
 
-docker build -f Dockerfile.ubuntu-x64.focal -t awfq.processos.api .
+docker-compose build --no-cache
 
+Em seguida, execute:
 
-sudo docker run -d -p 8080:80 --name processos-api awfq.processos.api
+docker-compose up
+
+Pronto! A aplicação está pronta para receber requisições usando a porta http 8080.
 
 
 * Talvez você precise de privilegios elevados para executar o docker no seu sistema operacional.
 
 ## Mongo Shell
 
-docker exec -it mongoContainer mongo
+Caso queira executar alguma query diretamente no MongoDB
+
+docker exec -it nome_mongo_container mongo
+
+O nome do container aparece logo após executar "docker-compose up", mas você pode verificar listando 
+os contaiiner ativos na sua máquina. Use o seguinte comando para ver os container ativos:
+
+docker ps
 
 ## Implementação
 
@@ -45,3 +56,6 @@ http://localhost:8080/api/processos/situacoes?api-version=1.0
 * [LanguageExt]("https://github.com/louthy/language-ext")
 * [xUnit]("https://xunit.net/")
 * [Fluent Assertions]("https://fluentassertions.com/")
+* [MongoDB.Driver]("https://docs.mongodb.com/drivers/csharp")
+* [Microsoft.Extensions.Logging]("https://github.com/dotnet/extensions")
+* [Mailjet.Api]("https://github.com/mailjet/mailjet-apiv3-dotnet")
