@@ -35,7 +35,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
             new TipoErrosEntrada(12, "É possível que um ou mais dos ids estejam mal formatados. Tenta refazer a requisição.");
         public static readonly MensagensErros RecursoNaoEncontrado = new TipoErrosEntrada(13, "O Recurso não foi encontrado.");
         public static readonly MensagensErros IdentificadorUnicoInvalido = new TipoErrosEntrada(14, "O identificador único é inválido.");
-        public static readonly MensagensErros ProcessoJaFinalizado = new TipoErrosEntrada(15, "A Situação do Processo não permite remoção.");
+        public static readonly MensagensErros ProcessoJaFinalizado = new TipoErrosEntrada(15, "A Situação do Processo não permite esta ação.");
         public static readonly MensagensErros RemocaoDeProcessoPaiNaoPermitida = new TipoErrosEntrada(16, "Não é permitida remoção de uma processo Pai.");
         public static readonly MensagensErros ErroNaoEsperado =
             new TipoErrosEntrada(99, "Ocorreu um erro não esperado.");

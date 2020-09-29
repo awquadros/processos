@@ -71,6 +71,25 @@ namespace Awfq.Processos.Api.v1.Controllers
             return result.Match(CriadoNaRota, NecessarioCorrecaoEntrada);
         }
 
+        [HttpPut]
+        public ActionResult<ProcessoDTO> EditaProcesso([FromBody] ProcessoExistenteDTO dto)
+        {
+            var comando = new ComandoEditaProcesso(
+                dto.Id,
+                dto.ProcessoUnificado,
+                dto.DataDistribuicao,
+                dto.SegredoJustica,
+                dto.PastaFisicaCliente,
+                dto.Responsaveis,
+                dto.SituacaoId,
+                dto.Descricao,
+                dto.PaiId);
+
+            var result = this.servicoAplicacaoProcessos.EditaProcesso(comando);
+
+            return result.Match(CriadoNaRota, NecessarioCorrecaoEntrada);
+        }
+
         [HttpDelete("{id}")]
         public ActionResult<ProcessoDTO> RemoveProcesso(string id)
         {

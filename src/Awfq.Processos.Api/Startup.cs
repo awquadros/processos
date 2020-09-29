@@ -24,6 +24,7 @@ using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB.Abstracoes;
 using Awfq.Comuns;
 using Awfq.Processos.App.Utils;
 using Awfq.Processos.App.Dominio.Modelo.Processos;
+using Awfq.Processos.App.Portas.Adaptadores.Notificacao.Smtp;
 
 namespace Awfq.Processos.Api
 {
@@ -107,6 +108,11 @@ namespace Awfq.Processos.Api
             container.Register<IValidadorRemocaoResponsavel, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
             container.Register<IValidadorProcessoPai, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.Register<IValidadorSituacaoRemocao, MongoDBRepositorioProcessos>(Lifestyle.Transient);
+            container.Register<INotificadorResponsavel, NotificadorSmtp>(Lifestyle.Transient);
+            container.Register<IValidaEdicaoProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
+            container.Register<IObtentorResponsavel, MongoDBRepositorioResponsaveis>(Lifestyle.Transient);
+            container.Register<IObtendorProcessoPorId, MongoDBRepositorioProcessos>(Lifestyle.Transient);
+            container.Register<IEditorProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.RegisterInstance<ConfiguracoesMongoDb>(configuracoesMongoDb);
         }
 

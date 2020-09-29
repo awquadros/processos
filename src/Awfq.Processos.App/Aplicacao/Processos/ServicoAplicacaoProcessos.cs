@@ -21,12 +21,15 @@ namespace Awfq.Processos.App.Aplicacao.Processos
         private readonly ICriadorProcesso criador;
         private readonly IGeradorIdentificadorProcesso geradorIdentificador;
         private readonly IRemovedorProcesso removedor;
-        private readonly IEditorResponsavel editor;
+        private readonly IEditorProcesso editor;
         private readonly IValidadorProcessoUnico validadorProcessoUnico;
-        IValidadorProcessoPai validadorProcessoPai;
-        IValidadorSituacaoRemocao validadorSituacaoRemocao;
+        private readonly IValidadorProcessoPai validadorProcessoPai;
+        private readonly IValidadorSituacaoRemocao validadorSituacaoRemocao;
+        private readonly IObtentorResponsavel obtentorResponsavel;
+        private readonly INotificadorResponsavel notificadorResponsavel;
+        private readonly IObtendorProcessoPorId obtendorProcessoPorId;
         private readonly IEnumerable<PassoValidacao> pipelineValidacaoCriacao;
-        //private readonly IEnumerable<PassoValidacao> pipelineValidacaoEdicao;
+        private readonly IEnumerable<PassoValidacao> pipelineValidacaoEdicao;
 
         delegate (IEnumerable<MensagensErros>, IComandoCriaEditaProcesso) PassoValidacao(
             (IEnumerable<MensagensErros> erros, IComandoCriaEditaProcesso cmd) fluxo);
@@ -35,42 +38,45 @@ namespace Awfq.Processos.App.Aplicacao.Processos
         /// Inicia uma nova isntância da classe <see cref="ServicoAplicacaoProcessos" />
         /// </sumary>
         public ServicoAplicacaoProcessos(
-            IValidadorProcessoUnico umValidadorProcessoUnico, IValidadorProcessoPai umValidadorProcessoPai, 
+            IValidadorProcessoUnico umValidadorProcessoUnico,
+            IValidadorProcessoPai umValidadorProcessoPai,
             IValidadorSituacaoRemocao umValidadorSituacaoRemocao,
-            ICriadorProcesso umCriador, IGeradorIdentificadorProcesso umGeradorIdentificador,
-            IRemovedorProcesso umRemovedor, IEditorResponsavel umEditor, ILogger umLogger)
+            INotificadorResponsavel umNotificadorResponsavel,
+            ICriadorProcesso umCriador,
+            IGeradorIdentificadorProcesso umGeradorIdentificador,
+            IObtentorResponsavel umObtentorResponsavel,
+            IRemovedorProcesso umRemovedor,
+            IEditorProcesso umEditor,
+            IObtendorProcessoPorId umObtendorProcessoPorId,
+            ILogger umLogger)
         {
             this.validadorProcessoUnico = umValidadorProcessoUnico;
             this.validadorProcessoPai = umValidadorProcessoPai;
             this.validadorSituacaoRemocao = umValidadorSituacaoRemocao;
+            this.notificadorResponsavel = umNotificadorResponsavel;
             this.criador = umCriador;
             this.geradorIdentificador = umGeradorIdentificador;
+            this.obtentorResponsavel = umObtentorResponsavel;
             this.removedor = umRemovedor;
             this.editor = umEditor;
+            this.obtendorProcessoPorId = umObtendorProcessoPorId;
             this.logger = umLogger;
             this.pipelineValidacaoCriacao = new PassoValidacao[] {
                 ValidaResponsaveis, ValidaDescricao, ValidaPastaFisica, ValidaDataDistribuicao, ValidaProcessoUnificado };
-            //this.pipelineValidacaoEdicao = new PassoValidacao[] { ValidaNome, ValidaApenasValorCpf, ValidaEmail };
+            this.pipelineValidacaoEdicao = new PassoValidacao[] {
+                ValidaSituacaoEdicao, ValidaResponsaveis, ValidaDescricao, ValidaPastaFisica, ValidaDataDistribuicao, ValidaProcessoUnificado };
         }
 
-        public Either<IEnumerable<MensagensErros>, ProcessoDTO> CriaProcesso(ComandoCriaProcesso cmd)
-        {
-            var result =
-                ValidaCriacao(cmd)
-                    .Match(ProcedeCriacao, CancelaAcao<ProcessoDTO>);
+        public Either<IEnumerable<MensagensErros>, ProcessoDTO> CriaProcesso(ComandoCriaProcesso cmd) =>
+            ValidaCriacao(cmd).Match(ProcedeCriacao, CancelaAcao<ProcessoDTO>);
 
-            return result;
-        }
+        public Either<IEnumerable<MensagensErros>, ProcessoDTO> RemoveProcesso(ComandoRemoveProcesso cmd) =>
+            ValidaRemocaoProcesso(cmd).Match(ProcedeRemocao, CancelaAcao<ProcessoDTO>);
 
-
-        public Either<IEnumerable<MensagensErros>, ProcessoDTO> RemoveProcesso(ComandoRemoveProcesso cmd)
-        {
-            var result =
-                ValidaRemocaoProcesso(cmd)
-                    .Match(ProcedeRemocao, CancelaAcao<ProcessoDTO>);
-
-            return result;
-        }
+        public Either<IEnumerable<MensagensErros>, ProcessoDTO> EditaProcesso(ComandoEditaProcesso cmd) =>
+            ValidaEdicao(cmd)
+                .Match<Either<IEnumerable<MensagensErros>, ComandoEditaProcesso>>(AdaptaComandoEdicao, CancelaAcao<ComandoEditaProcesso>)
+                .Match(ProcedeEdicao, CancelaAcao<ProcessoDTO>);
 
         private bool Nega(bool v) => !v;
         private bool NuloOuVazio(string str) => string.IsNullOrWhiteSpace(str);
@@ -84,10 +90,13 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             NaoNulaOuVazia(f.cmd.ProcessoUnificado) && f.cmd.ProcessoUnificado.Length != 20
             ? (f.erros.Append(MensagensErros.NumeroProcessoUnificadoMalFormatado), f.cmd) : f;
 
-        private PassoValidacao TalvezValideNumeroPrcessoNoCadastro => f =>
-            f.erros.Contains(MensagensErros.NumeroProcessoUnificadoNaoInformado)
-            || f.erros.Contains(MensagensErros.NumeroProcessoUnificadoMalFormatado)
-                ? f : ValidaNumeroProcessoJaCadastrado(f);
+        private PassoValidacao TalvezValideNumeroPrcessoNoCadastro => f => f.cmd switch {
+            ComandoCriaProcesso cmd => 
+                f.erros.Contains(MensagensErros.NumeroProcessoUnificadoNaoInformado)
+                || f.erros.Contains(MensagensErros.NumeroProcessoUnificadoMalFormatado)
+                    ? f : ValidaNumeroProcessoJaCadastrado(f),
+            _ => f
+        };
 
         private PassoValidacao ValidaNumeroProcessoJaCadastrado => f =>
             this.validadorProcessoUnico.ProcessoJaCadastrado(f.cmd.ProcessoUnificado)
@@ -122,6 +131,13 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             f.cmd.ResponsaveisIds.Count() != f.cmd.ResponsaveisIds.Distinct().Count()
                 ? (f.erros.Append(MensagensErros.ResponsavelDuplicado), f.cmd) : f;
 
+        private PassoValidacao ValidaSituacaoEdicao => f => f.cmd switch
+        {
+            ComandoEditaProcesso cmd => this.validadorSituacaoRemocao.JaFinalizado(new Guid(((ComandoEditaProcesso)cmd).Id))
+                ? (f.erros.Append(MensagensErros.ProcessoJaFinalizado), f.cmd) : f,
+            _ => f
+        };
+
         private PassoValidacao ValidaResponsaveis => f =>
             ValidaResponsavelDuplicado(ValidaResponsavelExcedeuLimite(ValidaResponsavelNaoInformado(f)));
 
@@ -145,6 +161,16 @@ namespace Awfq.Processos.App.Aplicacao.Processos
                 : Right<IEnumerable<MensagensErros>, IComandoCriaEditaProcesso>(cmd);
         }
 
+        private Either<IEnumerable<MensagensErros>, IComandoCriaEditaProcesso> ValidaEdicao(
+            in IComandoCriaEditaProcesso cmd)
+        {
+            (IEnumerable<MensagensErros> erros, _) = ExecutaPipelineValidacao(this.pipelineValidacaoEdicao, cmd);
+
+            return erros.Any()
+                ? Left<IEnumerable<MensagensErros>, IComandoCriaEditaProcesso>(erros)
+                : Right<IEnumerable<MensagensErros>, IComandoCriaEditaProcesso>(cmd);
+        }
+
         private Guid? toNullableGuid(string possivelGuid)
         {
             if (string.IsNullOrWhiteSpace(possivelGuid))
@@ -159,19 +185,29 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             {
                 var id = this.geradorIdentificador.ObtemProximoId();
                 var paiId = toNullableGuid(cmd.PaiId);
-                var responsaveis = cmd.ResponsaveisIds?.Select(r => new Guid(r));
+                var responsaveisIds = cmd.ResponsaveisIds?.Select(r => new Guid(r));
                 var processo = new Processo(
                     id,
                     cmd.ProcessoUnificado,
                     cmd.DataDistribuicao,
                     cmd.SegredoJustica,
                     cmd.PastaFisicaCliente,
-                    responsaveis,
+                    responsaveisIds,
                     cmd.SituacaoId,
                     cmd.Descricao,
                     paiId);
 
+                var responsaveis = this.obtentorResponsavel
+                    .ObtemResponsaveis(responsaveisIds.ToArray())
+                    .Select(x => (x.Nome, x.Email));
                 var representacao = this.criador.Cria(processo);
+
+                var notificacao = new NotificacaoResponsavel(
+                    "Notificação de Processo",
+                    $"Você foi cadastrado como envolvido no processo de número {cmd.ProcessoUnificado}."
+                );
+
+                this.notificadorResponsavel.NotificarAsync(notificacao, responsaveis);
 
                 return Right<IEnumerable<MensagensErros>, ProcessoDTO>(CriarDesse(representacao));
             }
@@ -186,6 +222,69 @@ namespace Awfq.Processos.App.Aplicacao.Processos
                 return Left<IEnumerable<MensagensErros>, ProcessoDTO>(new MensagensErros[] { MensagensErros.ErroNaoEsperado });
             }
         }
+
+        private Either<IEnumerable<MensagensErros>, ProcessoDTO> ProcedeEdicao(ComandoEditaProcesso cmd)
+        {
+            try
+            {
+                var guid = new Guid(cmd.Id);
+                var paiId = toNullableGuid(cmd.PaiId);
+                var responsaveisIds = cmd.ResponsaveisIds?.Select(r => new Guid(r));
+                var processoEditado = new Processo(
+                    guid,
+                    cmd.ProcessoUnificado,
+                    cmd.DataDistribuicao,
+                    cmd.SegredoJustica,
+                    cmd.PastaFisicaCliente,
+                    responsaveisIds,
+                    cmd.SituacaoId,
+                    cmd.Descricao,
+                    paiId);
+
+                var processo = this.obtendorProcessoPorId.ObtemProcessoPorId(guid);
+                var novosResponsaveis = responsaveisIds.Except(processo.ResponsaveisIds).ToArray();
+                var haNovosResponsaveis = novosResponsaveis.Length > 0;
+
+                foreach (var item in novosResponsaveis)
+                {
+                    this.logger.LogInformation(item.ToString());                    
+                }
+
+                var responsaveis = this.obtentorResponsavel
+                    .ObtemResponsaveis(novosResponsaveis)
+                    .Select(x => (x.Nome, x.Email));
+
+                var representacao = this.editor.Edita(processoEditado);
+
+                if (haNovosResponsaveis)
+                {
+                    var notificacao = new NotificacaoResponsavel(
+                        "Notificação de Processo",
+                        $"Você foi adicionado como envolvido no processo de número {cmd.ProcessoUnificado}."
+                    );
+
+                    this.notificadorResponsavel.NotificarAsync(notificacao, responsaveis);
+                }
+
+                return Right<IEnumerable<MensagensErros>, ProcessoDTO>(CriarDesse(representacao));
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is OverflowException)
+            {
+                this.logger.LogError(ex, ex.Message, cmd);
+                return Left<IEnumerable<MensagensErros>, ProcessoDTO>(new MensagensErros[] { MensagensErros.IdentificadorMalFormatado });
+            }
+            catch (System.Exception ex)
+            {
+                this.logger.LogError(ex, ex.Message, cmd);
+                return Left<IEnumerable<MensagensErros>, ProcessoDTO>(new MensagensErros[] { MensagensErros.ErroNaoEsperado });
+            }
+        }
+
+        private Either<IEnumerable<MensagensErros>, ComandoEditaProcesso> AdaptaComandoEdicao(IComandoCriaEditaProcesso cmd) => cmd switch
+        {
+            ComandoEditaProcesso ced => Right(ced),
+            _ => Left((IEnumerable<MensagensErros>)new MensagensErros[] { MensagensErros.ErroNaoEsperado })
+        };
 
         private Either<IEnumerable<MensagensErros>, TRight> CancelaAcao<TRight>(IEnumerable<MensagensErros> erros)
             => Left<IEnumerable<MensagensErros>, TRight>(erros);

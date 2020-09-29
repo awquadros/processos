@@ -90,17 +90,17 @@ namespace Awfq.Processos.App.Aplicacao.Processos
 
 
                     // Match no fim da Pipeline
-                    BsonRegularExpression filtroResponsaveis = 
+                    BsonRegularExpression filtroResponsaveis =
                         !string.IsNullOrWhiteSpace(parcialNomeResponsavel)
                             ? new BsonRegularExpression($".*{parcialNomeResponsavel}.*", "i")
                             : new BsonRegularExpression($".*", "i");
 
                     BsonDocument filtroFinal =
                         new BsonDocument() {
-                            { "$match", new BsonDocument() 
+                            { "$match", new BsonDocument()
                                 {
-                                    { "Responsaveis", new BsonDocument() 
-                                        { { "$regex", filtroResponsaveis } } 
+                                    { "Responsaveis", new BsonDocument()
+                                        { { "$regex", filtroResponsaveis } }
                                     }
                                 }
                             }};
@@ -130,8 +130,21 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             var regex = new Regex("[^0-9$]");
             var processo = regex.Replace(umProcessoUnificado, string.Empty);
 
+            // Match no fim da Pipeline
+            BsonRegularExpression filtroResponsaveis = new BsonRegularExpression($".*", "i");
+
+            BsonDocument filtroFinal =
+                new BsonDocument() {
+                            { "$match", new BsonDocument()
+                                {
+                                    { "Responsaveis", new BsonDocument()
+                                        { { "$regex", filtroResponsaveis } }
+                                    }
+                                }
+                            }};
+
             return await this.ConsultaAsync(new BsonDocument(
-                    new BsonElement("ProcessoUnificado", new BsonString(processo))), null);
+                    new BsonElement("ProcessoUnificado", new BsonString(processo))), filtroFinal);
         }
 
         /// <sumary>
@@ -177,7 +190,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos
                 }, filtroFinal
             };
 
-            PipelineDefinition<Processo, ProcessoConsultadoDTO> pipeline = 
+            PipelineDefinition<Processo, ProcessoConsultadoDTO> pipeline =
                 PipelineDefinition<Processo, ProcessoConsultadoDTO>.Create(stages);
 
             var cursor = await this.contextoPersistencia.Processos.AggregateAsync<ProcessoConsultadoDTO>(pipeline);
@@ -186,7 +199,8 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             return Right<IEnumerable<MensagensErros>, IEnumerable<ProcessoConsultadoDTO>>(projecao);
         }
 
-        private BsonDocument CriaFiltroPeriodo(DateTime? dataInicialDistribuicao, DateTime? dataFinalDistribuicao) {
+        private BsonDocument CriaFiltroPeriodo(DateTime? dataInicialDistribuicao, DateTime? dataFinalDistribuicao)
+        {
             var inicio = dataInicialDistribuicao.HasValue && dataInicialDistribuicao?.Date < DateTime.Now.Date
                             ? dataInicialDistribuicao.Value.Date
                             : DateTime.Now.AddDays(-30).Date;

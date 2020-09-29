@@ -10,6 +10,7 @@ using Awfq.Processos.App.Aplicacao.Processos;
 using Microsoft.Extensions.Logging;
 using Awfq.Processos.App.Dominio.Modelo.Processos;
 using Awfq.Processos.App.Aplicacao.Processos.Comandos;
+using System.Collections.Generic;
 
 namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
 {
@@ -24,10 +25,13 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
         private readonly Mock<ICriadorProcesso> criador;
         private readonly Mock<IGeradorIdentificadorProcesso> geradorIdentificador;
         private readonly Mock<IRemovedorProcesso> removedor;
-        private readonly Mock<IEditorResponsavel> editor;
+        private readonly Mock<IEditorProcesso> editor;
         private readonly Mock<IValidadorProcessoUnico> validadorProcessoUnico;
         private readonly Mock<IValidadorProcessoPai> validadorProcessoPai;
         private readonly Mock<IValidadorSituacaoRemocao> validadorSituacaoRemocao;
+        private readonly Mock<INotificadorResponsavel> notificadorResponsavel;
+        private readonly Mock<IObtentorResponsavel> obtentorResponsavel;
+        private readonly Mock<IObtendorProcessoPorId> obtendorProcessoPorId;
         private readonly IServicoAplicacaoProcessos servico;
 
 
@@ -37,20 +41,29 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             this.criador = new Mock<ICriadorProcesso>();
             this.geradorIdentificador = new Mock<IGeradorIdentificadorProcesso>();
             this.removedor = new Mock<IRemovedorProcesso>();
-            this.editor = new Mock<IEditorResponsavel>();
+            this.editor = new Mock<IEditorProcesso>();
             this.validadorProcessoUnico = new Mock<IValidadorProcessoUnico>();
             this.validadorProcessoPai = new Mock<IValidadorProcessoPai>();
             this.validadorSituacaoRemocao = new Mock<IValidadorSituacaoRemocao>();
+            this.notificadorResponsavel = new Mock<INotificadorResponsavel>();
+            this.obtendorProcessoPorId = new Mock<IObtendorProcessoPorId>();
+            this.obtentorResponsavel = new Mock<IObtentorResponsavel>();
             this.servico = new ServicoAplicacaoProcessos(
                 validadorProcessoUnico.Object,
                 validadorProcessoPai.Object,
                 validadorSituacaoRemocao.Object,
+                notificadorResponsavel.Object,
                 criador.Object,
                 geradorIdentificador.Object,
+                obtentorResponsavel.Object,
                 removedor.Object,
                 editor.Object,
+                obtendorProcessoPorId.Object,
                 logger.Object);
 
+            this.notificadorResponsavel.Setup(x => 
+                x.NotificarAsync(It.IsAny<NotificacaoResponsavel>(), 
+                It.IsAny<IEnumerable<ValueTuple<string, string>>>()));
             this.validadorProcessoPai.Setup(x => x.ProcessoEhPai(It.IsAny<Guid>())).Returns(false);
             this.criador.Setup(x => x.Cria(It.IsAny<Processo>())).Returns((Processo x) => x);
         }

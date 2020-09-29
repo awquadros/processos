@@ -9,7 +9,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos
     {
         Either<IEnumerable<MensagensErros>, ProcessoDTO> CriaProcesso(ComandoCriaProcesso cmd);
 
-        //Either<IEnumerable<MensagensErros>, ResponsavelDTO> EditaResponsavel(ComandoEditaResponsavel cmd);
+        Either<IEnumerable<MensagensErros>, ProcessoDTO> EditaProcesso(ComandoEditaProcesso cmd);
 
         Either<IEnumerable<MensagensErros>, ProcessoDTO> RemoveProcesso(ComandoRemoveProcesso cmd);
     }

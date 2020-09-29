@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Awfq.Processos.App.Dominio.Modelo.Processos;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
 using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB.Abstracoes;
@@ -10,7 +12,8 @@ using MongoDB.Driver;
 namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
     public class MongoDBRepositorioResponsaveis : 
-        IEditorResponsavel, IRemovedorResponsavel, IRepositorioResponsaveis, IValidadorRemocaoResponsavel
+        IEditorResponsavel, IRemovedorResponsavel, 
+        IRepositorioResponsaveis, IValidadorRemocaoResponsavel, IObtentorResponsavel
     {
         private readonly IContextoPersistencia contextoPersistencia;
         private readonly ILogger logger;
@@ -34,8 +37,6 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
             {
                 { "_id", new BsonBinaryData(umResponsavel.Id, GuidRepresentation.Standard) }
             };
-
-            this.logger.LogInformation("criou a busca com " + umResponsavel.Id.ToString());
 
             var atualizarCom = new BsonDocument()
             {
@@ -132,6 +133,16 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
         }
 
         public Guid ObtemProximoId() => Guid.NewGuid();
+
+        public IEnumerable<Responsavel> ObtemResponsaveis(Guid[] responsaveisId)
+        {   
+            var ids = responsaveisId.Select(x => new BsonBinaryData(x, GuidRepresentation.Standard));
+            var result = this.contextoPersistencia.Responsaveis.Find(new BsonDocument() {
+                { "_id", new BsonDocument(new BsonElement("$in", new BsonArray(ids)))}
+            });
+
+            return result.ToList();
+        }
 
         public Responsavel Remove(Guid umId)
         {

@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using Awfq.Processos.App.Dominio.Modelo.Processos;
-using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
 using Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB.Abstracoes;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
@@ -11,7 +10,8 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
 {
     public class MongoDBRepositorioProcessos : 
         ICriadorProcesso, IGeradorIdentificadorProcesso, IRemovedorProcesso, IValidadorProcessoUnico, 
-        IValidadorHierarquico, IValidadorProcessoPai, IValidadorSituacaoRemocao
+        IValidadorHierarquico, IValidadorProcessoPai, IValidadorSituacaoRemocao, IValidaEdicaoProcesso,
+        IObtendorProcessoPorId, IEditorProcesso
     {
         private readonly IContextoPersistencia contextoPersistencia;
         private readonly ILogger logger;
@@ -22,6 +22,10 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
             this.contextoPersistencia = umContextoPersistencia;
             this.logger = umLogger;
         }
+
+        public bool PodeSerEditado(string umProcessoUnificado) =>
+            this.contextoPersistencia.Processos.Find(
+                p => p.ProcessoUnificado == umProcessoUnificado && p.SituacaoId != 4 && p.SituacaoId != 5 ).Any();
 
         public bool JaFinalizado(Guid umProcessoId) =>
             this.contextoPersistencia.Processos.Find(
@@ -41,39 +45,43 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
         }
 
 
-        public Responsavel Edita(Responsavel umResponsavel)
+        public Processo Edita(Processo umProcesso)
         {
             var buscarPor = new BsonDocument()
             {
-                { "_id", new BsonBinaryData(umResponsavel.Id, GuidRepresentation.Standard) }
+                { "_id", new BsonBinaryData(umProcesso.Id, GuidRepresentation.Standard) }
             };
 
-            this.logger.LogInformation("criou a busca com " + umResponsavel.Id.ToString());
+            var pai = umProcesso.PaiId.HasValue
+                ? new BsonElement("PaiId", new BsonBinaryData(umProcesso.PaiId.Value, GuidRepresentation.Standard))
+                : new BsonElement("PaiId", BsonNull.Value);
+
+            var dataDistribuicao = umProcesso.DataDistribuicao.HasValue
+                ? new BsonElement("DataDistribuicao", new BsonDateTime(umProcesso.DataDistribuicao.Value))
+                : new BsonElement("DataDistribuicao", BsonNull.Value);
+
+            var descricao = umProcesso.Descricao != null
+                ? new BsonElement("Descricao", new BsonString(umProcesso.Descricao))
+                : new BsonElement("Descricao", BsonNull.Value);
 
             var atualizarCom = new BsonDocument()
             {
-                { "Nome", new BsonString(umResponsavel.Nome) },
-                { "Cpf", new BsonString(umResponsavel.Cpf) },
-                { "Email", new BsonString(umResponsavel.Email) }
+                pai,
+                { "ProcessoUnificado", new BsonString(umProcesso.ProcessoUnificado) },
+                dataDistribuicao,
+                { "SegredoJustica", new BsonBoolean(umProcesso.SegredoJustica) },
+                { "PastaFisicaCliente", new BsonString(umProcesso.PastaFisicaCliente) },
+                descricao,
+                { "ResponsaveisIds", new BsonArray(umProcesso.ResponsaveisIds) },
+                { "SituacaoId", new BsonInt32(umProcesso.SituacaoId) }
             };
-
-            if (umResponsavel.Foto == null)
-            {
-                atualizarCom.Add(new BsonElement("Foto", BsonNull.Value));
-            }
-            else
-            {
-                atualizarCom.Add(new BsonElement("Foto", new BsonString(umResponsavel.Foto)));
-            }
 
             var result = 
                 this.contextoPersistencia
-                    .Responsaveis
+                    .Processos
                     .FindOneAndUpdate(buscarPor, atualizarCom);
 
-            this.logger.LogInformation((result == null).ToString());
-
-                    return result;
+            return result;
         }
 
         public bool EstaNaMesmaHierarquia(string umId)
@@ -100,5 +108,10 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Persistencia.MongoDB
                         { "_id", new BsonBinaryData(umId,  GuidRepresentation.Standard) }
                     });
         }
+
+        public Processo ObtemProcessoPorId(Guid umId) =>
+            this.contextoPersistencia.Processos.Find(
+                new BsonDocument(new BsonElement("_id", 
+                    new BsonBinaryData(umId, GuidRepresentation.Standard)))).FirstOrDefault();
     }
 }
