@@ -87,6 +87,10 @@ namespace Awfq.Processos.Api
             ConfiguracoesMongoDb configuracoesMongoDb =
                 Configuration.GetSection(nameof(ConfiguracoesMongoDb)).Get<ConfiguracoesMongoDb>();
 
+            // Load application MailJet settings
+            ConfiguracoesNotificadorSmtp configuracoesNotificadorSmtp =
+                Configuration.GetSection(nameof(ConfiguracoesNotificadorSmtp)).Get<ConfiguracoesNotificadorSmtp>();
+
             // Persistencia
             container.Register<IMongoClient>(() => new MongoClient(configuracoesMongoDb.StringConexao), Lifestyle.Singleton);
             container.Register<IContextoPersistencia, ContextoPersistencia>(Lifestyle.Transient);
@@ -114,6 +118,7 @@ namespace Awfq.Processos.Api
             container.Register<IObtendorProcessoPorId, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.Register<IEditorProcesso, MongoDBRepositorioProcessos>(Lifestyle.Transient);
             container.RegisterInstance<ConfiguracoesMongoDb>(configuracoesMongoDb);
+            container.RegisterInstance<IConfiguracoesNotificadorSmtp>(configuracoesNotificadorSmtp);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

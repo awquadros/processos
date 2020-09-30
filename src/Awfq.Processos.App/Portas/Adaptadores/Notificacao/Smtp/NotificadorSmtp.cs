@@ -16,9 +16,11 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Notificacao.Smtp
     /// </sumary>
     public class NotificadorSmtp : INotificadorResponsavel
     {
+        private readonly IConfiguracoesNotificadorSmtp configuracoes;
         private readonly ILogger logger;
         
-        public NotificadorSmtp(ILogger umLogger) {
+        public NotificadorSmtp(IConfiguracoesNotificadorSmtp configuracoes, ILogger umLogger) {
+            this.configuracoes = configuracoes;
             this.logger = umLogger;
         }
 
@@ -27,7 +29,7 @@ namespace Awfq.Processos.App.Portas.Adaptadores.Notificacao.Smtp
             var r = responsaveis
                 .Select(x => new JObject { { "Email", x.Email }, { "Name", x.Nome } });
 
-            MailjetClient client = new MailjetClient("b670283a8af9ae848de603d743530a51","92baab854581c924f3c89261b030990a")
+            MailjetClient client = new MailjetClient(configuracoes.ChaveApi, configuracoes.Segredo)
             {
                 Version = ApiVersion.V3_1,
             };
