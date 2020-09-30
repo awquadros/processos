@@ -6,7 +6,7 @@ using Awfq.Processos.App.Aplicacao.Responsaveis.Comandos;
 using Awfq.Processos.App.Aplicacao.Responsaveis.Dados;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
 using LanguageExt;
-
+using Microsoft.Extensions.Logging;
 using static LanguageExt.Prelude;
 
 namespace Awfq.Processos.App.Aplicacao.Responsaveis
@@ -24,6 +24,8 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
         private readonly IEnumerable<PassoValidacao> pipelineValidacaoCriacao;
         private readonly IEnumerable<PassoValidacao> pipelineValidacaoEdicao;
         private readonly IValidadorRemocaoResponsavel validadorRemocao;
+        private readonly ILogger logger;
+
 
         delegate (IEnumerable<MensagensErros>, IComandoCriaEditaResponsavel) PassoValidacao(
             (IEnumerable<MensagensErros> erros, IComandoCriaEditaResponsavel cmd) fluxo);
@@ -33,7 +35,8 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
         /// </sumary>
         public ServicoAplicacaoResponsaveis(
             IRepositorioResponsaveis umRepositorio, IRemovedorResponsavel umRemovedor, IEditorResponsavel umEditor,
-            IValidadorEmail umValidadorEmail, IValidadorCpf umValidadorCpf, IValidadorRemocaoResponsavel validadorRemocao)
+            IValidadorEmail umValidadorEmail, IValidadorCpf umValidadorCpf, IValidadorRemocaoResponsavel validadorRemocao,
+            ILogger umLogger)
         {
             this.repositorio = umRepositorio;
             this.removedor = umRemovedor;
@@ -41,6 +44,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
             this.validadorEmail = umValidadorEmail;
             this.validadorCpf = umValidadorCpf;
             this.validadorRemocao = validadorRemocao;
+            this.logger = umLogger;
             this.pipelineValidacaoCriacao = new PassoValidacao[] { ValidaNome, ValidaCpf, ValidaEmail };
             this.pipelineValidacaoEdicao = new PassoValidacao[] { ValidaNome, ValidaApenasValorCpf, ValidaEmail };
         }
@@ -112,7 +116,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
 
         private PassoValidacao ValidaApenasValorCpf => f => ValidaCpfDigito(ValidaCpfNaoInformado(f));
 
-        private PassoValidacao ValidaEmailNaoInformado => f => NuloOuVazio(f.cmd.Email) 
+        private PassoValidacao ValidaEmailNaoInformado => f => NuloOuVazio(f.cmd.Email)
             ? (f.erros.Append(MensagensErros.EmailNaoInformado), f.cmd) : f;
 
         private PassoValidacao ValidaEmailInvalido => f => NaoNulaOuVazia(f.cmd.Email) && !validadorEmail.EmailValido(f.cmd.Email)
@@ -124,7 +128,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
         private PassoValidacao ValidaEmail => f => ValidaEmailExcedeuLimiteMaximo(ValidaEmailInvalido(ValidaEmailNaoInformado(f)));
 
         private (IEnumerable<MensagensErros>, IComandoCriaEditaResponsavel) ExecutaPipelineValidacao(
-            IEnumerable<PassoValidacao> p, IComandoCriaEditaResponsavel cmd) 
+            IEnumerable<PassoValidacao> p, IComandoCriaEditaResponsavel cmd)
         {
             IEnumerable<MensagensErros> acc = new List<MensagensErros>();
             return p.Aggregate((acc, cmd), (acc, passo) =>
@@ -164,10 +168,25 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
 
         private Either<IEnumerable<MensagensErros>, ResponsavelDTO> ProcedeEdicao(ComandoEditaResponsavel cmd)
         {
-            var guid = new Guid(cmd.Id);
-            var responsavel = this.editor.Edita(new Responsavel(guid, cmd.Nome, cmd.Cpf, cmd.Email, cmd.Foto));
+            try
+            {
+                var guid = new Guid(cmd.Id);
+                var responsavel = this.editor.Edita(new Responsavel(guid, cmd.Nome, cmd.Cpf, cmd.Email, cmd.Foto));
 
-            return Right<IEnumerable<MensagensErros>, ResponsavelDTO>(CriarDesse(responsavel));
+                return responsavel != null
+                    ? Right<IEnumerable<MensagensErros>, ResponsavelDTO>(CriarDesse(responsavel))
+                    : Left<IEnumerable<MensagensErros>, ResponsavelDTO>(new MensagensErros[] { MensagensErros.RecursoNaoEncontrado });
+            }
+            catch (System.Exception ex) when (ex is ArgumentNullException || ex is FormatException || ex is OverflowException)
+            {
+                this.logger.LogInformation(ex, ex.Message);
+                return Left<IEnumerable<MensagensErros>, ResponsavelDTO>(new MensagensErros[] { MensagensErros.IdentificadorUnicoInvalido });                
+            }
+            catch (System.Exception ex)
+            {
+                this.logger.LogError(ex, ex.Message);
+                return Left<IEnumerable<MensagensErros>, ResponsavelDTO>(new MensagensErros[] { MensagensErros.ErroNaoEsperado });
+            }
         }
 
         private Either<IEnumerable<MensagensErros>, TRight> CancelaAcao<TRight>(IEnumerable<MensagensErros> erros)
@@ -185,7 +204,7 @@ namespace Awfq.Processos.App.Aplicacao.Responsaveis
 
             if (id != Guid.Empty && this.validadorRemocao.FazParteDeProcesso(id))
                 erros.Add(MensagensErros.ExisteVinculoProcessual);
-                
+
             return erros.Any()
                 ? Left<IEnumerable<MensagensErros>, ComandoRemoveResponsavel>(erros)
                 : Right<IEnumerable<MensagensErros>, ComandoRemoveResponsavel>(cmd);

@@ -8,6 +8,7 @@ using Moq;
 using Awfq.Processos.App.Dominio.Modelo.Responsaveis;
 using Awfq.Comuns;
 using Awfq.Processos.App.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
 {
@@ -27,6 +28,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
                 var validadorEmail = new Mock<IValidadorEmail>();
                 var validadorCpf = new Mock<IValidadorCpf>();
                 var validadorRemocao = new Mock<IValidadorRemocaoResponsavel>();
+                var logger = new Mock<ILogger>();
 
                 repo
                     .Setup(o => o.Salva(It.IsAny<Responsavel>()))
@@ -49,7 +51,8 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
                     .Returns(false);
 
                 this.servico = new ServicoAplicacaoResponsaveis(
-                    repo.Object, removedor, editor, validadorEmail.Object, validadorCpf.Object, validadorRemocao.Object);
+                    repo.Object, removedor, editor, validadorEmail.Object, 
+                    validadorCpf.Object, validadorRemocao.Object, logger.Object);
             }
 
             [Fact]
@@ -217,6 +220,7 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
             private readonly Mock<IValidadorRemocaoResponsavel> validadorRemocao;
             private readonly ServicoAplicacaoResponsaveis servico;
             private readonly Mock<IEditorResponsavel> editor;
+            private readonly Mock<ILogger> logger;
 
             public ServicoComConfiguracao()
             {
@@ -226,8 +230,10 @@ namespace Awfq.Processos.App.Tests.Aplicacao.Responsaveis
                 this.validadorEmail = new Mock<IValidadorEmail>();
                 this.validadorCpf = new Mock<IValidadorCpf>();
                 this.validadorRemocao = new Mock<IValidadorRemocaoResponsavel>();
+                this.logger = new Mock<ILogger>();
                 this.servico = new ServicoAplicacaoResponsaveis(
-                    repo.Object, removedor.Object, editor.Object, validadorEmail.Object, validadorCpf.Object, validadorRemocao.Object);
+                    repo.Object, removedor.Object, editor.Object, validadorEmail.Object, 
+                    validadorCpf.Object, validadorRemocao.Object, logger.Object);
             }
 
             [Fact]

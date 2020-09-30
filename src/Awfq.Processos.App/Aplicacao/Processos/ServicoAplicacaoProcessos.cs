@@ -61,9 +61,9 @@ namespace Awfq.Processos.App.Aplicacao.Processos
             this.obtendorProcessoPorId = umObtendorProcessoPorId;
             this.logger = umLogger;
             this.pipelineValidacaoCriacao = new PassoValidacao[] {
-                ValidaResponsaveis, ValidaDescricao, ValidaPastaFisica, ValidaDataDistribuicao, ValidaProcessoUnificado };
+                ValidaSituacao, ValidaResponsaveis, ValidaDescricao, ValidaPastaFisica, ValidaDataDistribuicao, ValidaProcessoUnificado };
             this.pipelineValidacaoEdicao = new PassoValidacao[] {
-                ValidaSituacaoEdicao, ValidaResponsaveis, ValidaDescricao, ValidaPastaFisica, ValidaDataDistribuicao, ValidaProcessoUnificado };
+                ValidaSituacao, ValidaResponsaveis, ValidaDescricao, ValidaPastaFisica, ValidaDataDistribuicao, ValidaProcessoUnificado };
         }
 
         public Either<IEnumerable<MensagensErros>, ProcessoDTO> CriaProcesso(ComandoCriaProcesso cmd) =>
@@ -137,6 +137,12 @@ namespace Awfq.Processos.App.Aplicacao.Processos
                 ? (f.erros.Append(MensagensErros.ProcessoJaFinalizado), f.cmd) : f,
             _ => f
         };
+
+        private PassoValidacao ValidaSituacaoInexistente => f =>
+            Situacao.GetAll<Situacao>().Find(x => x.SituacaoId == f.cmd.SituacaoId).Any()
+                ? f : (f.erros.Append(MensagensErros.SituacaoInvalida), f.cmd);
+
+        private PassoValidacao ValidaSituacao => f => ValidaSituacaoEdicao(ValidaSituacaoInexistente(f));
 
         private PassoValidacao ValidaResponsaveis => f =>
             ValidaResponsavelDuplicado(ValidaResponsavelExcedeuLimite(ValidaResponsavelNaoInformado(f)));

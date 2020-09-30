@@ -37,6 +37,7 @@ namespace Awfq.Processos.App.Aplicacao.Processos.Comandos
         public static readonly MensagensErros IdentificadorUnicoInvalido = new TipoErrosEntrada(14, "O identificador único é inválido.");
         public static readonly MensagensErros ProcessoJaFinalizado = new TipoErrosEntrada(15, "A Situação do Processo não permite esta ação.");
         public static readonly MensagensErros RemocaoDeProcessoPaiNaoPermitida = new TipoErrosEntrada(16, "Não é permitida remoção de uma processo Pai.");
+        public static readonly MensagensErros SituacaoInvalida = new TipoErrosEntrada(17, "A Situação informada é inválida.");
         public static readonly MensagensErros ErroNaoEsperado =
             new TipoErrosEntrada(99, "Ocorreu um erro não esperado.");
 
