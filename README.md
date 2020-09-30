@@ -33,11 +33,20 @@ os contaiiner ativos na sua máquina. Use o seguinte comando para ver os contain
 
 docker ps
 
-## Implementação
+## Envio de Emails
 
-**Processos**
+O envio de emails foi implementado usando a API do site MailJet. É preciso se cadastrar para obter uma cahve de API.
 
-http://localhost:8080/api/processos/situacoes?api-version=1.0
+Visite o site [MailJet]("https://www.mailjet.com/")
+
+Após ter a chave em mãos inseri-las no arquivo appsettings.json
+
+```json
+  "ConfiguracoesNotificadorSmtp": {
+    "ChaveApi": "sua chave",
+    "Segredo": "seu segredo"
+  }
+```
 
 ### Persistência
 
